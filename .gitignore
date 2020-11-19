@@ -1,0 +1,10 @@
+.DS_Store
+/target/
+/profile-microservice/.settings/
+/song-microservice/.settings/
+/profile-microservice/target/
+/song-microservice/target/
+.project
+.factorypath
+.classpath
+/.metadata/
