@@ -2,11 +2,14 @@ package com.csc301.songmicroservice;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -81,8 +84,27 @@ public class SongController {
 
 		Map<String, Object> response = new HashMap<String, Object>();
 		response.put("path", String.format("POST %s", Utils.getUrl(request)));
-
-		return null;
+		
+		String songName = params.get("songName");
+		String songArtistFullName = params.get("songArtistFullName");
+		String songAlbum = params.get("songAlbum");
+		
+		boolean checkNull = songName == null || songAlbum == null || songArtistFullName == null;
+		
+		if (checkNull) {
+			response.put("status", "BAD_REQUEST");
+			response.put("data", "{}");
+			return response;
+		}
+		
+		Song songToAdd =  new Song(songName, songArtistFullName, songAlbum);
+		DbQueryStatus statusResult = this.songDal.addSong(songToAdd);
+		
+		response.put("status", statusResult.getMessage());
+		response.put("data", statusResult.getData());
+		
+		return response;
+		
 	}
 
 	

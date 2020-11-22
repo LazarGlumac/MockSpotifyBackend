@@ -1,11 +1,17 @@
 package com.csc301.songmicroservice;
 
+import java.util.Map;
+
+import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Repository;
+
+import com.mongodb.BasicDBObject;
+import com.mongodb.DBObject;
 
 @Repository
 public class SongDalImpl implements SongDal {
@@ -19,8 +25,16 @@ public class SongDalImpl implements SongDal {
 
 	@Override
 	public DbQueryStatus addSong(Song songToAdd) {
-		// TODO Auto-generated method stub
-		return null;
+		
+		Map<String, String> songAsMap = songToAdd.getJsonRepresentation();
+		songAsMap.put("songAmountFavourites", "0");
+		DBObject songAsDBObject = new BasicDBObject(songAsMap);
+		
+		this.db.insert(songAsDBObject);
+		DbQueryStatus toReturn = new DbQueryStatus("OK", DbQueryExecResult.QUERY_OK);
+		toReturn.setData(songAsDBObject);
+		
+		return toReturn;
 	}
 
 	@Override
