@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -18,12 +20,8 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import okhttp3.Call;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
-
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 @RestController
 @RequestMapping("/")
@@ -31,9 +29,6 @@ public class SongController {
 
 	@Autowired
 	private final SongDal songDal;
-
-	private OkHttpClient client = new OkHttpClient();
-
 	
 	public SongController(SongDal songDal) {
 		this.songDal = songDal;
@@ -89,20 +84,13 @@ public class SongController {
 		String songArtistFullName = params.get("songArtistFullName");
 		String songAlbum = params.get("songAlbum");
 		
-		boolean checkNull = songName == null || songAlbum == null || songArtistFullName == null;
-		
-		if (checkNull) {
-			response.put("status", "BAD_REQUEST");
-			response.put("data", "{}");
-			return response;
-		}
-		
 		Song songToAdd =  new Song(songName, songArtistFullName, songAlbum);
 		DbQueryStatus statusResult = this.songDal.addSong(songToAdd);
 		
-		response.put("status", statusResult.getMessage());
-		response.put("data", statusResult.getData());
+		response = Utils.setResponseStatus(response, statusResult.getdbQueryExecResult(), statusResult.getData());
 		
+		// HttpServletResponse httpServletResponse = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getResponse();
+		// httpServletResponse.setStatus(500);
 		return response;
 		
 	}

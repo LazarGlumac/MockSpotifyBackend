@@ -1,17 +1,15 @@
 package com.csc301.songmicroservice;
 
-import java.util.Map;
+import javax.servlet.http.HttpServletResponse;
 
-import org.bson.Document;
-import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Repository;
-
-import com.mongodb.BasicDBObject;
-import com.mongodb.DBObject;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 @Repository
 public class SongDalImpl implements SongDal {
@@ -25,14 +23,20 @@ public class SongDalImpl implements SongDal {
 
 	@Override
 	public DbQueryStatus addSong(Song songToAdd) {
+
+		boolean checkNull = songToAdd.getSongName() == null || songToAdd.getSongAlbum() == null || songToAdd.getSongArtistFullName() == null;
+		DbQueryStatus toReturn;
 		
-		Map<String, String> songAsMap = songToAdd.getJsonRepresentation();
-		songAsMap.put("songAmountFavourites", "0");
-		DBObject songAsDBObject = new BasicDBObject(songAsMap);
-		
-		this.db.insert(songAsDBObject);
-		DbQueryStatus toReturn = new DbQueryStatus("OK", DbQueryExecResult.QUERY_OK);
-		toReturn.setData(songAsDBObject);
+		if (checkNull) {
+			toReturn = new DbQueryStatus("INTERNAL_SERVER_ERROR", DbQueryExecResult.QUERY_ERROR_GENERIC);
+		}
+		else {
+			
+			this.db.insert(songToAdd);
+			toReturn = new DbQueryStatus("OK", DbQueryExecResult.QUERY_OK);
+			toReturn.setData(songToAdd.getJsonRepresentation());
+			
+		}
 		
 		return toReturn;
 	}
