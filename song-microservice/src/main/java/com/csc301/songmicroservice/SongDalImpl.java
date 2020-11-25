@@ -1,8 +1,10 @@
 package com.csc301.songmicroservice;
 
 import java.util.List;
+import java.util.Map;
 
 import org.bson.types.ObjectId;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -70,8 +72,21 @@ public class SongDalImpl implements SongDal {
 
 	@Override
 	public DbQueryStatus getSongTitleById(String songId) {
-		// TODO Auto-generated method stub
-		return null;
+		
+		DbQueryStatus songFromID = findSongById(songId);
+		DbQueryStatus toReturn;
+		
+		if (!(songFromID.getMessage().equals("OK"))) {
+			toReturn = new DbQueryStatus(songFromID.getMessage(), songFromID.getdbQueryExecResult());
+		}
+		else {
+			
+			toReturn = new DbQueryStatus("OK", DbQueryExecResult.QUERY_OK);
+			toReturn.setData(((Map<String, String>) songFromID.getData()).get("songName"));
+			
+		}
+		
+		return toReturn;
 	}
 
 	@Override
