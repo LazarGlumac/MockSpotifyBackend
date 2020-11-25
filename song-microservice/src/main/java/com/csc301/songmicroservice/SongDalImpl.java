@@ -1,6 +1,5 @@
 package com.csc301.songmicroservice;
 
-import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -19,8 +18,22 @@ public class SongDalImpl implements SongDal {
 
 	@Override
 	public DbQueryStatus addSong(Song songToAdd) {
-		// TODO Auto-generated method stub
-		return null;
+
+		boolean checkNull = songToAdd.getSongName() == null || songToAdd.getSongAlbum() == null || songToAdd.getSongArtistFullName() == null;
+		DbQueryStatus toReturn;
+		
+		if (checkNull) {
+			toReturn = new DbQueryStatus("MISSING BODY PARAMETER", DbQueryExecResult.QUERY_ERROR_GENERIC);
+		}
+		else {
+			
+			this.db.insert(songToAdd);
+			toReturn = new DbQueryStatus("OK", DbQueryExecResult.QUERY_OK);
+			toReturn.setData(songToAdd.getJsonRepresentation());
+			
+		}
+		
+		return toReturn;
 	}
 
 	@Override
