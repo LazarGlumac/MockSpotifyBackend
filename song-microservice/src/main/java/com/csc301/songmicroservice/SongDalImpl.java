@@ -76,7 +76,7 @@ public class SongDalImpl implements SongDal {
 		DbQueryStatus songFromID = findSongById(songId);
 		DbQueryStatus toReturn;
 		
-		if (!songFromID.getMessage().equals("OK")) {
+		if (!(songFromID.getMessage().equals("OK"))) {
 			toReturn = new DbQueryStatus(songFromID.getMessage(), songFromID.getdbQueryExecResult());
 		}
 		else {
