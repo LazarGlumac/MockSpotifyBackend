@@ -1,15 +1,10 @@
 package com.csc301.songmicroservice;
 
-import javax.servlet.http.HttpServletResponse;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Repository;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
 
 @Repository
 public class SongDalImpl implements SongDal {
@@ -28,7 +23,7 @@ public class SongDalImpl implements SongDal {
 		DbQueryStatus toReturn;
 		
 		if (checkNull) {
-			toReturn = new DbQueryStatus("INTERNAL_SERVER_ERROR", DbQueryExecResult.QUERY_ERROR_GENERIC);
+			toReturn = new DbQueryStatus("MISSING BODY PARAMETER", DbQueryExecResult.QUERY_ERROR_GENERIC);
 		}
 		else {
 			

@@ -88,9 +88,7 @@ public class SongController {
 		DbQueryStatus statusResult = this.songDal.addSong(songToAdd);
 		
 		response = Utils.setResponseStatus(response, statusResult.getdbQueryExecResult(), statusResult.getData());
-		
-		// HttpServletResponse httpServletResponse = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getResponse();
-		// httpServletResponse.setStatus(500);
+
 		return response;
 		
 	}
