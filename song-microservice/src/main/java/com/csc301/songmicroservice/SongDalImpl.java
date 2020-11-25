@@ -123,7 +123,8 @@ public class SongDalImpl implements SongDal {
 			else {
 				change = 1;
 			}
-			songFromQuery.setSongAmountFavourites((songFromQuery.getSongAmountFavourites() + change));
+			
+			songFromQuery.setSongAmountFavourites(Math.max(0, songFromQuery.getSongAmountFavourites() + change));
 
 			this.db.save(songFromQuery);
 
