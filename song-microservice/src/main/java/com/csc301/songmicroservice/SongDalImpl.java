@@ -124,14 +124,20 @@ public class SongDalImpl implements SongDal {
 				change = 1;
 			}
 			
-			songFromQuery.setSongAmountFavourites(Math.max(0, songFromQuery.getSongAmountFavourites() + change));
+			if (songFromQuery.getSongAmountFavourites() + change < 0) {
+				toReturn = new DbQueryStatus("INVALID_OPERATION", DbQueryExecResult.QUERY_ERROR_GENERIC);
+			}
+			else {
+				songFromQuery.setSongAmountFavourites(songFromQuery.getSongAmountFavourites() + change);
+				this.db.save(songFromQuery);
 
-			this.db.save(songFromQuery);
-
-			toReturn = new DbQueryStatus("OK", DbQueryExecResult.QUERY_OK);
+				toReturn = new DbQueryStatus("OK", DbQueryExecResult.QUERY_OK);
+			}
+			
 
 		}
 
 		return toReturn;
 	}
+	
 }
