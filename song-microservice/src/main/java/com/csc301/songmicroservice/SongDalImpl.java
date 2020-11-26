@@ -1,5 +1,6 @@
 package com.csc301.songmicroservice;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -26,27 +27,27 @@ public class SongDalImpl implements SongDal {
 
 		boolean checkNull = songToAdd.getSongName() == null || songToAdd.getSongAlbum() == null || songToAdd.getSongArtistFullName() == null;
 		DbQueryStatus toReturn;
-		
+
 		if (checkNull) {
 			toReturn = new DbQueryStatus("MISSING BODY PARAMETER", DbQueryExecResult.QUERY_ERROR_GENERIC);
 		}
 		else {
-			
+
 			this.db.insert(songToAdd);
 			toReturn = new DbQueryStatus("OK", DbQueryExecResult.QUERY_OK);
 			toReturn.setData(songToAdd.getJsonRepresentation());
-			
+
 		}
-		
+
 		return toReturn;
 	}
 
 	@Override
 	public DbQueryStatus findSongById(String songId) {
-		
+
 		boolean checkNull = songId == null;
 		DbQueryStatus toReturn;
-		
+
 		if (checkNull) {
 			toReturn = new DbQueryStatus("MISSING BODY PARAMETER", DbQueryExecResult.QUERY_ERROR_GENERIC);
 		} 
@@ -54,9 +55,9 @@ public class SongDalImpl implements SongDal {
 
 			Query query = new Query();
 			query.addCriteria(Criteria.where("_id").is(songId));
-			
+
 			List<Song> songToFind = this.db.find(query, Song.class);
-			
+
 			if (songToFind.size() == 0) {
 				toReturn = new DbQueryStatus("NOT_FOUND", DbQueryExecResult.QUERY_ERROR_NOT_FOUND);
 			}
@@ -64,28 +65,28 @@ public class SongDalImpl implements SongDal {
 				toReturn = new DbQueryStatus("OK", DbQueryExecResult.QUERY_OK);
 				toReturn.setData(songToFind.get(0).getJsonRepresentation());
 			}
-			
+
 		}
-		
+
 		return toReturn;
 	}
 
 	@Override
 	public DbQueryStatus getSongTitleById(String songId) {
-		
+
 		DbQueryStatus songFromID = findSongById(songId);
 		DbQueryStatus toReturn;
-		
+
 		if (!(songFromID.getMessage().equals("OK"))) {
 			toReturn = new DbQueryStatus(songFromID.getMessage(), songFromID.getdbQueryExecResult());
 		}
 		else {
-			
+
 			toReturn = new DbQueryStatus("OK", DbQueryExecResult.QUERY_OK);
 			toReturn.setData(((Map<String, String>) songFromID.getData()).get("songName"));
-			
+
 		}
-		
+
 		return toReturn;
 	}
 
@@ -97,7 +98,46 @@ public class SongDalImpl implements SongDal {
 
 	@Override
 	public DbQueryStatus updateSongFavouritesCount(String songId, boolean shouldDecrement) {
-		// TODO Auto-generated method stub
-		return null;
+
+		DbQueryStatus songFromID = findSongById(songId);
+		DbQueryStatus toReturn;
+
+		if (!(songFromID.getMessage().equals("OK"))) {
+			toReturn = new DbQueryStatus(songFromID.getMessage(), songFromID.getdbQueryExecResult());
+		}
+		else {
+
+			toReturn = new DbQueryStatus("OK", DbQueryExecResult.QUERY_OK);
+
+			HashMap<String, String> mapFromQuery = (HashMap<String, String>) songFromID.getData();
+
+			Song songFromQuery = new Song(mapFromQuery.get("songName"), mapFromQuery.get("songArtistFullName"), mapFromQuery.get("songAlbum"));
+			songFromQuery.setSongAmountFavourites(Long.valueOf(mapFromQuery.get("songAmountFavourites")));
+			songFromQuery.setId(new ObjectId(mapFromQuery.get("id")));
+
+			int change;
+
+			if (shouldDecrement) {
+				change = -1;
+			}
+			else {
+				change = 1;
+			}
+			
+			if (songFromQuery.getSongAmountFavourites() + change < 0) {
+				toReturn = new DbQueryStatus("INVALID_OPERATION", DbQueryExecResult.QUERY_ERROR_GENERIC);
+			}
+			else {
+				songFromQuery.setSongAmountFavourites(songFromQuery.getSongAmountFavourites() + change);
+				this.db.save(songFromQuery);
+
+				toReturn = new DbQueryStatus("OK", DbQueryExecResult.QUERY_OK);
+			}
+			
+
+		}
+
+		return toReturn;
 	}
+	
 }

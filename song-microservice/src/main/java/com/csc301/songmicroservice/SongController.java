@@ -100,7 +100,12 @@ public class SongController {
 
 		Map<String, Object> response = new HashMap<String, Object>();
 		response.put("data", String.format("PUT %s", Utils.getUrl(request)));
+		
+		boolean decrementAsBoolean = shouldDecrement.equals("true");
+		
+		DbQueryStatus statusResult = this.songDal.updateSongFavouritesCount(songId, decrementAsBoolean);
+		response = Utils.setResponseStatus(response, statusResult.getdbQueryExecResult(), statusResult.getData());
 
-		return null;
+		return response;
 	}
 }
