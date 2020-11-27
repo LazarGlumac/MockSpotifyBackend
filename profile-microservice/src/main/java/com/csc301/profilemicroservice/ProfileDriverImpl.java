@@ -10,6 +10,8 @@ import org.neo4j.driver.v1.Record;
 import org.neo4j.driver.v1.Session;
 import org.neo4j.driver.v1.StatementResult;
 
+import org.json.*;
+
 import org.springframework.stereotype.Repository;
 import org.neo4j.driver.v1.Transaction;
 
@@ -82,7 +84,7 @@ public class ProfileDriverImpl implements ProfileDriver {
 			try (Session session = ProfileMicroserviceApplication.driver.session()) {
 				try (Transaction trans = session.beginTransaction()) {
 					String queryStr = String.format(
-							"MATCH (p1:profile), (p2:profile) WHERE p1.userName = \"%1$s\" AND p2.userName = \"%2$s\" CREATE (p1)-[:follows]->(p2)",
+							"MATCH (p1:profile), (p2:profile) WHERE p1.userName = \"%1$s\" AND p2.userName = \"%2$s\" MERGE (p1)-[:follows]->(p2)",
 							userName, frndUserName);
 					trans.run(queryStr);
 
@@ -127,6 +129,57 @@ public class ProfileDriverImpl implements ProfileDriver {
 	@Override
 	public DbQueryStatus getAllSongFriendsLike(String userName) {
 
-		return null;
+		DbQueryStatus queryStatus;
+
+		if (userName == null) {
+			queryStatus = new DbQueryStatus("MISSING BODY PARAMETER", DbQueryExecResult.QUERY_ERROR_GENERIC);
+		} else {
+			JSONObject allSongsFriendsLike = new JSONObject();
+			
+			try (Session session = ProfileMicroserviceApplication.driver.session()) {
+				try (Transaction trans = session.beginTransaction()) {
+					String queryStr = String.format(
+							"MATCH (p:profile)-[:follows]->(f:profile) WHERE p.userName = \"%1$s\" RETURN f.userName",
+							userName);
+
+					StatementResult result = trans.run(queryStr);
+					
+					List<String>friends = new ArrayList<String>();
+					List<String>songs = new ArrayList<String>();
+					
+					while (result.hasNext()) {
+						friends.add(result.next().get(0).toString());
+					}
+					
+					
+					for (String friendName : friends) {
+						String playlistName = (friendName + "-favorites").replaceAll("\"", "");
+						queryStr = String.format(
+								"MATCH (p:profile)-[:created]->(pl:playlist) WHERE p.userName = \"%1$s\" AND pl.plName = \"%2$s\" MATCH (pl:playlist)-[:includes]->(s:song) RETURN s.songId", 
+								friendName, playlistName).replaceAll("\"\"", "\"");
+						
+						result = trans.run(queryStr);
+						
+						while (result.hasNext()) {
+							songs.add(result.next().get(0).toString().replaceAll("\"",""));
+						}
+						
+						allSongsFriendsLike.put(friendName.replaceAll("\"",""), songs);
+						songs.clear();
+
+					}
+
+					trans.success();
+
+				}
+				session.close();
+				
+			}
+			
+			queryStatus = new DbQueryStatus("OK", DbQueryExecResult.QUERY_OK);
+			queryStatus.setData(allSongsFriendsLike.toMap());
+		}
+
+		return queryStatus;
 	}
 }
