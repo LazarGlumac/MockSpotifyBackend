@@ -48,30 +48,47 @@ public class ProfileDriverImpl implements ProfileDriver {
 		if (userName == null || fullName == null || password == null) {
 			queryStatus = new DbQueryStatus("MISSING BODY PARAMETER", DbQueryExecResult.QUERY_ERROR_GENERIC);
 		} else {
+			boolean alreadyExists = false;
+			
 			try (Session session = ProfileMicroserviceApplication.driver.session()) {
 				try (Transaction trans = session.beginTransaction()) {
 					Map<String, Object> params = new HashMap<String, Object>();
 					params.put("username", userName);
-					params.put("fullname", fullName);
-					params.put("password", password);
-					params.put("playlistName", userName+"-favorites");
 					
-					String queryStr = "CREATE (p:profile {userName: $username, fullName: $fullname, password: $password})";
-					trans.run(queryStr, params);
+					String queryStr = "MATCH (p:profile) WHERE p.userName = $username return p";
+					StatementResult result = trans.run(queryStr, params);
+					
+					if (!result.hasNext()) {
+						params.put("fullname", fullName);
+						params.put("password", password);
+						params.put("playlistName", userName+"-favorites");
+						
+						queryStr = "CREATE (p:profile {userName: $username, fullName: $fullname, password: $password})";
+						trans.run(queryStr, params);
 
-					queryStr = "CREATE (p:playlist {plName: $playlistName})";
-					trans.run(queryStr, params);
+						queryStr = "CREATE (p:playlist {plName: $playlistName})";
+						trans.run(queryStr, params);
 
-					queryStr = "MATCH (p:profile), (pl:playlist) WHERE p.userName = $username AND pl.plName = $playlistName CREATE (p)-[:created]->(pl)";
-					trans.run(queryStr, params);
+						queryStr = "MATCH (p:profile), (pl:playlist) WHERE p.userName = $username AND pl.plName = $playlistName CREATE (p)-[:created]->(pl)";
+						trans.run(queryStr, params);
+					} else {
+						alreadyExists = true;
+					}
 
 					trans.success();
 
 				}
 				session.close();
 			}
+			
+			if (alreadyExists) {
+				queryStatus = new DbQueryStatus("PROFILE USERNAME ALREADY EXISTS", DbQueryExecResult.QUERY_ERROR_GENERIC);
+			} else {
+				queryStatus = new DbQueryStatus("OK", DbQueryExecResult.QUERY_OK);
+			}
+			
 
-			queryStatus = new DbQueryStatus("OK", DbQueryExecResult.QUERY_OK);
+			
 		}
 
 		return queryStatus;
