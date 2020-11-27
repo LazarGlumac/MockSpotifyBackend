@@ -88,6 +88,27 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 	@Override
 	public DbQueryStatus deleteSongFromDb(String songId) {
 
-		return null;
+		DbQueryStatus queryStatus;
+
+		if (songId == null) {
+			queryStatus = new DbQueryStatus("MISSING BODY PARAMETER", DbQueryExecResult.QUERY_ERROR_GENERIC);
+		} else {
+			try (Session session = ProfileMicroserviceApplication.driver.session()) {
+				try (Transaction trans = session.beginTransaction()) {
+					String queryStr = String.format(
+							"MATCH (s:song) WHERE s.songId = \"%1$s\" DETACH DELETE s",
+							songId);
+					trans.run(queryStr);
+
+					trans.success();
+
+				}
+				session.close();
+			}
+
+			queryStatus = new DbQueryStatus("OK", DbQueryExecResult.QUERY_OK);
+		}
+
+		return queryStatus;
 	}
 }
