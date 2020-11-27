@@ -41,7 +41,32 @@ public class ProfileDriverImpl implements ProfileDriver {
 	@Override
 	public DbQueryStatus createUserProfile(String userName, String fullName, String password) {
 		
-		return null;
+		DbQueryStatus queryStatus;
+		
+		if (userName == null || fullName == null || password == null) {
+			queryStatus = new DbQueryStatus("MISSING BODY PARAMETER", DbQueryExecResult.QUERY_ERROR_GENERIC);
+		} else {
+			try (Session session = ProfileMicroserviceApplication.driver.session()) {
+				try (Transaction trans = session.beginTransaction()) {
+					String queryStr = String.format("CREATE (p:profile {userName: \"%1$s\", password: \"%2$s\"})", userName, password);
+					trans.run(queryStr);
+					
+					queryStr = String.format("CREATE (p:playlist {plName: \"%1$s-favorites\"})", userName);
+					trans.run(queryStr);
+					
+					queryStr = String.format("MATCH (p:profile), (pl:playlist) WHERE p.userName = \"%1$s\" AND pl.plName = \"%1$s-favorites\" CREATE (p)-[:created]->(pl)", userName);
+					trans.run(queryStr);
+					
+					trans.success();
+					
+				}
+				session.close();
+			}
+			
+			queryStatus = new DbQueryStatus("OK", DbQueryExecResult.QUERY_OK);
+		}
+		
+		return queryStatus;
 	}
 
 	@Override
