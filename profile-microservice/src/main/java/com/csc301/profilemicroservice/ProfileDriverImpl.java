@@ -52,10 +52,11 @@ public class ProfileDriverImpl implements ProfileDriver {
 				try (Transaction trans = session.beginTransaction()) {
 					Map<String, Object> params = new HashMap<String, Object>();
 					params.put("username", userName);
+					params.put("fullname", fullName);
 					params.put("password", password);
 					params.put("playlistName", userName+"-favorites");
 					
-					String queryStr = "CREATE (p:profile {userName: $username, password: $password})";
+					String queryStr = "CREATE (p:profile {userName: $username, fullName: $fullname, password: $password})";
 					trans.run(queryStr, params);
 
 					queryStr = "CREATE (p:playlist {plName: $playlistName})";
