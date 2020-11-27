@@ -13,6 +13,7 @@ import com.csc301.profilemicroservice.Utils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import okhttp3.Call;
+import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
@@ -21,8 +22,12 @@ import okhttp3.Response;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+
+import org.json.*;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -53,7 +58,8 @@ public class ProfileController {
 		Map<String, Object> response = new HashMap<String, Object>();
 		response.put("path", String.format("POST %s", Utils.getUrl(request)));
 
-		DbQueryStatus dbQueryStatus = profileDriver.createUserProfile(params.get("userName"), params.get("fullName"), params.get("password"));
+		DbQueryStatus dbQueryStatus = profileDriver.createUserProfile(params.get("userName"), params.get("fullName"),
+				params.get("password"));
 
 		response = Utils.setResponseStatus(response, dbQueryStatus.getdbQueryExecResult(), dbQueryStatus.getData());
 
@@ -83,7 +89,60 @@ public class ProfileController {
 
 		DbQueryStatus dbQueryStatus = profileDriver.getAllSongFriendsLike(userName);
 
-		response = Utils.setResponseStatus(response, dbQueryStatus.getdbQueryExecResult(), dbQueryStatus.getData());
+		Object data = dbQueryStatus.getData();
+
+		ObjectMapper mapper = new ObjectMapper();
+		Map<String, Object> friendsFavoriteSongTitles = mapper.convertValue(data, Map.class);
+
+		Iterator<Entry<String, Object>> mapIterator = friendsFavoriteSongTitles.entrySet().iterator();
+
+		while (mapIterator.hasNext()) {
+			Map.Entry friendName = (Map.Entry) mapIterator.next();
+
+			String friendsSongIds = friendsFavoriteSongTitles.get(friendName.getKey()).toString();
+			friendsSongIds = friendsSongIds.substring(1, friendsSongIds.length() - 1);
+
+			if (!friendsSongIds.isEmpty()) {
+				String[] songIds = friendsSongIds.split(", ");
+				List<String> songTitles = new ArrayList<String>();
+
+				for (String songId : songIds) {
+					try {
+						String url = String.format("http://localhost:3001/getSongTitleById/%s", songId);
+
+						Request okRequest = new Request.Builder().url(url).method("GET", null).build();
+
+						Call call = client.newCall(okRequest);
+
+						Response responseFromAddMs = null;
+
+						try {
+							responseFromAddMs = call.execute();
+							String getSongIdBody = responseFromAddMs.body().string();
+
+							if (!mapper.readValue(getSongIdBody, Map.class).get("status").toString()
+									.equals("NOT_FOUND")) {
+								songTitles.add(mapper.readValue(getSongIdBody, Map.class).get("data").toString());
+							}
+
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				}
+
+				friendsFavoriteSongTitles.put(friendName.getKey().toString(), songTitles);
+			}
+
+		}
+
+		DbQueryStatus finalDbQueryStatus = new DbQueryStatus("OK", DbQueryExecResult.QUERY_OK);
+		finalDbQueryStatus.setData(friendsFavoriteSongTitles);
+
+		response = Utils.setResponseStatus(response, finalDbQueryStatus.getdbQueryExecResult(),
+				finalDbQueryStatus.getData());
 
 		return response;
 	}
