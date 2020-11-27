@@ -1,5 +1,8 @@
 package com.csc301.profilemicroservice;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.neo4j.driver.v1.Driver;
 import org.neo4j.driver.v1.Session;
 import org.neo4j.driver.v1.StatementResult;
@@ -38,13 +41,15 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 		} else {
 			try (Session session = ProfileMicroserviceApplication.driver.session()) {
 				try (Transaction trans = session.beginTransaction()) {
-					String queryStr = String.format("MERGE (s:song {songId: \"%1$s\"})", songId);
-					trans.run(queryStr);
+					Map<String, Object> params = new HashMap<String, Object>();
+					params.put("playlistName", userName+"-favorites");
+					params.put("songId", songId);
+					
+					String queryStr = "MERGE (s:song {songId: $songId})";
+					trans.run(queryStr, params);
 
-					queryStr = String.format(
-							"MATCH (pl:playlist), (s:song) WHERE pl.plName = \"%1$s-favorites\" AND s.songId = \"%2$s\" CREATE (pl)-[:includes]->(s)",
-							userName, songId);
-					trans.run(queryStr);
+					queryStr = "MATCH (pl:playlist), (s:song) WHERE pl.plName = $playlistName AND s.songId = $songId CREATE (pl)-[:includes]->(s)";
+					trans.run(queryStr, params);
 
 					trans.success();
 
@@ -68,10 +73,12 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 		} else {
 			try (Session session = ProfileMicroserviceApplication.driver.session()) {
 				try (Transaction trans = session.beginTransaction()) {
-					String queryStr = String.format(
-							"MATCH (:playlist {plName: \"%1$s-favorites\"})-[i:includes]->(:song {songId: \"%2$s\"}) DELETE i",
-							userName, songId);
-					trans.run(queryStr);
+					Map<String, Object> params = new HashMap<String, Object>();
+					params.put("playlistName", userName+"-favorites");
+					params.put("songId", songId);
+					
+					String queryStr = "MATCH (:playlist {plName: $playlistName})-[i:includes]->(:song {songId: $songId}) DELETE i";
+					trans.run(queryStr, params);
 
 					trans.success();
 
@@ -95,10 +102,11 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 		} else {
 			try (Session session = ProfileMicroserviceApplication.driver.session()) {
 				try (Transaction trans = session.beginTransaction()) {
-					String queryStr = String.format(
-							"MATCH (s:song) WHERE s.songId = \"%1$s\" DETACH DELETE s",
-							songId);
-					trans.run(queryStr);
+					Map<String, Object> params = new HashMap<String, Object>();
+					params.put("songId", songId);
+					
+					String queryStr = "MATCH (s:song) WHERE s.songId = $songId DETACH DELETE s";
+					trans.run(queryStr, params);
 
 					trans.success();
 

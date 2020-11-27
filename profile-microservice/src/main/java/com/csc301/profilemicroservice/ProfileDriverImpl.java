@@ -10,6 +10,8 @@ import org.neo4j.driver.v1.Record;
 import org.neo4j.driver.v1.Session;
 import org.neo4j.driver.v1.StatementResult;
 
+import org.json.*;
+
 import org.springframework.stereotype.Repository;
 import org.neo4j.driver.v1.Transaction;
 
@@ -48,17 +50,19 @@ public class ProfileDriverImpl implements ProfileDriver {
 		} else {
 			try (Session session = ProfileMicroserviceApplication.driver.session()) {
 				try (Transaction trans = session.beginTransaction()) {
-					String queryStr = String.format("CREATE (p:profile {userName: \"%1$s\", password: \"%2$s\"})",
-							userName, password);
-					trans.run(queryStr);
+					Map<String, Object> params = new HashMap<String, Object>();
+					params.put("username", userName);
+					params.put("password", password);
+					params.put("playlistName", userName+"-favorites");
+					
+					String queryStr = "CREATE (p:profile {userName: $username, password: $password})";
+					trans.run(queryStr, params);
 
-					queryStr = String.format("CREATE (p:playlist {plName: \"%1$s-favorites\"})", userName);
-					trans.run(queryStr);
+					queryStr = "CREATE (p:playlist {plName: $playlistName})";
+					trans.run(queryStr, params);
 
-					queryStr = String.format(
-							"MATCH (p:profile), (pl:playlist) WHERE p.userName = \"%1$s\" AND pl.plName = \"%1$s-favorites\" CREATE (p)-[:created]->(pl)",
-							userName);
-					trans.run(queryStr);
+					queryStr = "MATCH (p:profile), (pl:playlist) WHERE p.userName = $username AND pl.plName = $playlistName CREATE (p)-[:created]->(pl)";
+					trans.run(queryStr, params);
 
 					trans.success();
 
@@ -81,10 +85,12 @@ public class ProfileDriverImpl implements ProfileDriver {
 		} else {
 			try (Session session = ProfileMicroserviceApplication.driver.session()) {
 				try (Transaction trans = session.beginTransaction()) {
-					String queryStr = String.format(
-							"MATCH (p1:profile), (p2:profile) WHERE p1.userName = \"%1$s\" AND p2.userName = \"%2$s\" CREATE (p1)-[:follows]->(p2)",
-							userName, frndUserName);
-					trans.run(queryStr);
+					Map<String, Object> params = new HashMap<String, Object>();
+					params.put("username", userName);
+					params.put("friendUsername", frndUserName);
+					
+					String queryStr = "MATCH (p1:profile), (p2:profile) WHERE p1.userName = $username AND p2.userName = $friendUsername MERGE (p1)-[:follows]->(p2)";
+					trans.run(queryStr, params);
 
 					trans.success();
 
@@ -107,10 +113,12 @@ public class ProfileDriverImpl implements ProfileDriver {
 		} else {
 			try (Session session = ProfileMicroserviceApplication.driver.session()) {
 				try (Transaction trans = session.beginTransaction()) {
-					String queryStr = String.format(
-							"MATCH (:profile {userName: \"%1$s\"})-[f:follows]->(:profile {userName: \"%2$s\"}) DELETE f",
-							userName, frndUserName);
-					trans.run(queryStr);
+					Map<String, Object> params = new HashMap<String, Object>();
+					params.put("username", userName);
+					params.put("friendUsername", frndUserName);
+					
+					String queryStr = "MATCH (:profile {userName: $username})-[f:follows]->(:profile {userName: $friendUsername}) DELETE f";
+					trans.run(queryStr, params);
 
 					trans.success();
 
@@ -127,6 +135,57 @@ public class ProfileDriverImpl implements ProfileDriver {
 	@Override
 	public DbQueryStatus getAllSongFriendsLike(String userName) {
 
-		return null;
+		DbQueryStatus queryStatus;
+
+		if (userName == null) {
+			queryStatus = new DbQueryStatus("MISSING BODY PARAMETER", DbQueryExecResult.QUERY_ERROR_GENERIC);
+		} else {
+			JSONObject allSongsFriendsLike = new JSONObject();
+			
+			try (Session session = ProfileMicroserviceApplication.driver.session()) {
+				try (Transaction trans = session.beginTransaction()) {
+					Map<String, Object> params = new HashMap<String, Object>();
+					params.put("username", userName);
+					
+					String queryStr = "MATCH (p:profile)-[:follows]->(f:profile) WHERE p.userName = $username RETURN f.userName";
+					StatementResult result = trans.run(queryStr, params);
+					
+					List<String>friends = new ArrayList<String>();
+					List<String>songs = new ArrayList<String>();
+					
+					while (result.hasNext()) {
+						friends.add(result.next().get(0).toString());
+					}
+					
+					
+					for (String friendName : friends) {
+						params.put("friendName", friendName.replaceAll("\"", ""));
+						params.put("friendPlaylist", (friendName + "-favorites").replaceAll("\"", ""));
+						
+						queryStr = "MATCH (p:profile)-[:created]->(pl:playlist) WHERE p.userName = $friendName AND pl.plName = $friendPlaylist MATCH (pl:playlist)-[:includes]->(s:song) RETURN s.songId";
+						
+						result = trans.run(queryStr, params);
+						
+						while (result.hasNext()) {
+							songs.add(result.next().get(0).toString().replaceAll("\"",""));
+						}
+						
+						allSongsFriendsLike.put(friendName.replaceAll("\"",""), songs);
+						songs.clear();
+
+					}
+
+					trans.success();
+
+				}
+				session.close();
+				
+			}
+			
+			queryStatus = new DbQueryStatus("OK", DbQueryExecResult.QUERY_OK);
+			queryStatus.setData(allSongsFriendsLike.toMap());
+		}
+
+		return queryStatus;
 	}
 }
