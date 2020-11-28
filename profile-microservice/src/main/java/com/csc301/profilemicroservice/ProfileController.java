@@ -161,6 +161,20 @@ public class ProfileController {
 		return response;
 	}
 
+	@RequestMapping(value = "/addSong/{songId}", method = RequestMethod.PUT)
+	public @ResponseBody Map<String, Object> addSong(@PathVariable("songId") String songId,
+			HttpServletRequest request) {
+
+		Map<String, Object> response = new HashMap<String, Object>();
+		response.put("path", String.format("PUT %s", Utils.getUrl(request)));
+
+		DbQueryStatus dbQueryStatus = playlistDriver.addSong(songId);
+
+		response = Utils.setResponseStatus(response, dbQueryStatus.getdbQueryExecResult(), dbQueryStatus.getData());
+
+		return response;
+	}
+
 	@RequestMapping(value = "/likeSong/{userName}/{songId}", method = RequestMethod.PUT)
 	public @ResponseBody Map<String, Object> likeSong(@PathVariable("userName") String userName,
 			@PathVariable("songId") String songId, HttpServletRequest request) {

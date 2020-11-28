@@ -30,6 +30,33 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 			session.close();
 		}
 	}
+	
+	public DbQueryStatus addSong(String songId) {
+
+		DbQueryStatus queryStatus;
+
+		if (songId == null) {
+			queryStatus = new DbQueryStatus("MISSING BODY PARAMETER", DbQueryExecResult.QUERY_ERROR_GENERIC);
+		} else {
+			try (Session session = ProfileMicroserviceApplication.driver.session()) {
+				try (Transaction trans = session.beginTransaction()) {
+					Map<String, Object> params = new HashMap<String, Object>();
+					params.put("songId", songId);
+					
+					String queryStr = "MERGE (s:song {songId: $songId})";
+					trans.run(queryStr, params);
+
+					trans.success();
+
+				}
+				session.close();
+			}
+
+			queryStatus = new DbQueryStatus("OK", DbQueryExecResult.QUERY_OK);
+		}
+
+		return queryStatus;
+	}
 
 	@Override
 	public DbQueryStatus likeSong(String userName, String songId) {
@@ -42,14 +69,16 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 			try (Session session = ProfileMicroserviceApplication.driver.session()) {
 				try (Transaction trans = session.beginTransaction()) {
 					Map<String, Object> params = new HashMap<String, Object>();
-					params.put("playlistName", userName+"-favorites");
 					params.put("songId", songId);
 					
-					String queryStr = "MERGE (s:song {songId: $songId})";
-					trans.run(queryStr, params);
-
-					queryStr = "MATCH (pl:playlist), (s:song) WHERE pl.plName = $playlistName AND s.songId = $songId CREATE (pl)-[:includes]->(s)";
-					trans.run(queryStr, params);
+					String queryStr = "MATCH (s:song) WHERE s.songId = $songId";
+					StatementResult result = trans.run(queryStr, params);
+					
+					if (result.hasNext()) {
+						params.put("playlistName", userName+"-favorites");
+						queryStr = "MATCH (pl:playlist), (s:song) WHERE pl.plName = $playlistName AND s.songId = $songId CREATE (pl)-[:includes]->(s)";
+						trans.run(queryStr, params);
+					}
 
 					trans.success();
 
@@ -74,8 +103,8 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 			try (Session session = ProfileMicroserviceApplication.driver.session()) {
 				try (Transaction trans = session.beginTransaction()) {
 					Map<String, Object> params = new HashMap<String, Object>();
+					params.put("songId", songId);					
 					params.put("playlistName", userName+"-favorites");
-					params.put("songId", songId);
 					
 					String queryStr = "MATCH (:playlist {plName: $playlistName})-[i:includes]->(:song {songId: $songId}) DELETE i";
 					trans.run(queryStr, params);
