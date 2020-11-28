@@ -161,6 +161,20 @@ public class ProfileController {
 		return response;
 	}
 
+	@RequestMapping(value = "/addSong/{songId}", method = RequestMethod.PUT)
+	public @ResponseBody Map<String, Object> addSong(@PathVariable("songId") String songId,
+			HttpServletRequest request) {
+
+		Map<String, Object> response = new HashMap<String, Object>();
+		response.put("path", String.format("PUT %s", Utils.getUrl(request)));
+
+		DbQueryStatus dbQueryStatus = playlistDriver.addSong(songId);
+
+		response = Utils.setResponseStatus(response, dbQueryStatus.getdbQueryExecResult(), dbQueryStatus.getData());
+
+		return response;
+	}
+
 	@RequestMapping(value = "/likeSong/{userName}/{songId}", method = RequestMethod.PUT)
 	public @ResponseBody Map<String, Object> likeSong(@PathVariable("userName") String userName,
 			@PathVariable("songId") String songId, HttpServletRequest request) {
@@ -169,6 +183,31 @@ public class ProfileController {
 		response.put("path", String.format("PUT %s", Utils.getUrl(request)));
 
 		DbQueryStatus dbQueryStatus = playlistDriver.likeSong(userName, songId);
+		
+		if (dbQueryStatus.getdbQueryExecResult().equals(DbQueryExecResult.QUERY_OK)) {
+			try {
+				String urlParams = String.format("http://localhost:3001/updateSongFavouritesCount/%s", songId); 
+				
+				HttpUrl.Builder urlBuilder = HttpUrl.parse(urlParams).newBuilder();
+				urlBuilder.addQueryParameter("shouldDecrement", "false");
+				String url = urlBuilder.build().toString();
+				
+				RequestBody body = RequestBody.create(new byte[0],null);
+				
+				Request okRequest = new Request.Builder().url(url).method("PUT", body).build();
+
+				Call call = client.newCall(okRequest);
+
+				try {
+					call.execute();
+
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
 
 		response = Utils.setResponseStatus(response, dbQueryStatus.getdbQueryExecResult(), dbQueryStatus.getData());
 
@@ -184,6 +223,31 @@ public class ProfileController {
 
 		DbQueryStatus dbQueryStatus = playlistDriver.unlikeSong(userName, songId);
 
+		if (dbQueryStatus.getdbQueryExecResult().equals(DbQueryExecResult.QUERY_OK)) {
+			try {
+				String urlParams = String.format("http://localhost:3001/updateSongFavouritesCount/%s", songId); 
+				
+				HttpUrl.Builder urlBuilder = HttpUrl.parse(urlParams).newBuilder();
+				urlBuilder.addQueryParameter("shouldDecrement", "true");
+				String url = urlBuilder.build().toString();
+				
+				RequestBody body = RequestBody.create(new byte[0],null);
+				
+				Request okRequest = new Request.Builder().url(url).method("PUT", body).build();
+
+				Call call = client.newCall(okRequest);
+
+				try {
+					call.execute();
+
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		
 		response = Utils.setResponseStatus(response, dbQueryStatus.getdbQueryExecResult(), dbQueryStatus.getData());
 
 		return response;
