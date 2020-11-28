@@ -88,58 +88,77 @@ public class ProfileController {
 		response.put("path", String.format("PUT %s", Utils.getUrl(request)));
 
 		DbQueryStatus dbQueryStatus = profileDriver.getAllSongFriendsLike(userName);
+		DbQueryStatus finalDbQueryStatus;
 
-		Object data = dbQueryStatus.getData();
+		if (dbQueryStatus.getdbQueryExecResult().equals(DbQueryExecResult.QUERY_OK)) {
+			Object data = dbQueryStatus.getData();
 
-		ObjectMapper mapper = new ObjectMapper();
-		Map<String, Object> friendsFavoriteSongTitles = mapper.convertValue(data, Map.class);
+			ObjectMapper mapper = new ObjectMapper();
+			Map<String, Object> friendsFavoriteSongTitles = mapper.convertValue(data, Map.class);
 
-		Iterator<Entry<String, Object>> mapIterator = friendsFavoriteSongTitles.entrySet().iterator();
+			Iterator<Entry<String, Object>> mapIterator = friendsFavoriteSongTitles.entrySet().iterator();
 
-		while (mapIterator.hasNext()) {
-			Map.Entry friendName = (Map.Entry) mapIterator.next();
+			boolean goodCall = true;
 
-			String friendsSongIds = friendsFavoriteSongTitles.get(friendName.getKey()).toString();
-			friendsSongIds = friendsSongIds.substring(1, friendsSongIds.length() - 1);
+			while (mapIterator.hasNext() && goodCall) {
+				Map.Entry friendName = (Map.Entry) mapIterator.next();
 
-			if (!friendsSongIds.isEmpty()) {
-				String[] songIds = friendsSongIds.split(", ");
-				List<String> songTitles = new ArrayList<String>();
+				String friendsSongIds = friendsFavoriteSongTitles.get(friendName.getKey()).toString();
+				friendsSongIds = friendsSongIds.substring(1, friendsSongIds.length() - 1);
 
-				for (String songId : songIds) {
-					try {
-						String url = String.format("http://localhost:3001/getSongTitleById/%s", songId);
+				if (!friendsSongIds.isEmpty()) {
+					String[] songIds = friendsSongIds.split(", ");
+					List<String> songTitles = new ArrayList<String>();
 
-						Request okRequest = new Request.Builder().url(url).method("GET", null).build();
-
-						Call call = client.newCall(okRequest);
-
-						Response responseFromAddMs = null;
-
+					for (String songId : songIds) {
 						try {
-							responseFromAddMs = call.execute();
-							String getSongIdBody = responseFromAddMs.body().string();
+							String url = String.format("http://localhost:3001/getSongTitleById/%s", songId);
 
-							if (!mapper.readValue(getSongIdBody, Map.class).get("status").toString()
-									.equals("NOT_FOUND")) {
-								songTitles.add(mapper.readValue(getSongIdBody, Map.class).get("data").toString());
+							Request okRequest = new Request.Builder().url(url).method("GET", null).build();
+
+							Call call = client.newCall(okRequest);
+
+							Response responseFromAddMs = null;
+
+							try {
+								responseFromAddMs = call.execute();
+								String getSongIdBody = responseFromAddMs.body().string();
+
+								if (mapper.readValue(getSongIdBody, Map.class).get("status").toString().equals("OK")) {
+									songTitles.add(mapper.readValue(getSongIdBody, Map.class).get("data").toString());
+								} else {
+									if (!mapper.readValue(getSongIdBody, Map.class).get("status").toString()
+											.equals("NOT_FOUND")) {
+										goodCall = false;
+										break;
+									}
+								}
+
+							} catch (IOException e) {
+								goodCall = false;
+								break;
 							}
-
-						} catch (IOException e) {
-							e.printStackTrace();
+						} catch (Exception e) {
+							goodCall = false;
+							break;
 						}
-					} catch (Exception e) {
-						e.printStackTrace();
 					}
-				}
 
-				friendsFavoriteSongTitles.put(friendName.getKey().toString(), songTitles);
+					friendsFavoriteSongTitles.put(friendName.getKey().toString(), songTitles);
+				}
 			}
 
+			if (goodCall) {
+				finalDbQueryStatus = new DbQueryStatus("OK", DbQueryExecResult.QUERY_OK);
+				finalDbQueryStatus.setData(friendsFavoriteSongTitles);
+			} else {
+				finalDbQueryStatus = new DbQueryStatus("FAILED TO MAKE REQUEST TO MONGODB",
+						DbQueryExecResult.QUERY_ERROR_GENERIC);
+			}
+		} else {
+			finalDbQueryStatus = new DbQueryStatus("FAILED TO MAKE REQUEST TO NEO4J",
+					DbQueryExecResult.QUERY_ERROR_GENERIC);
 		}
-
-		DbQueryStatus finalDbQueryStatus = new DbQueryStatus("OK", DbQueryExecResult.QUERY_OK);
-		finalDbQueryStatus.setData(friendsFavoriteSongTitles);
 
 		response = Utils.setResponseStatus(response, finalDbQueryStatus.getdbQueryExecResult(),
 				finalDbQueryStatus.getData());
@@ -183,17 +202,19 @@ public class ProfileController {
 		response.put("path", String.format("PUT %s", Utils.getUrl(request)));
 
 		DbQueryStatus dbQueryStatus = playlistDriver.likeSong(userName, songId);
-		
+
+		boolean goodCall = true;
+
 		if (dbQueryStatus.getdbQueryExecResult().equals(DbQueryExecResult.QUERY_OK)) {
 			try {
-				String urlParams = String.format("http://localhost:3001/updateSongFavouritesCount/%s", songId); 
-				
+				String urlParams = String.format("http://localhost:3001/updateSongFavouritesCount/%s", songId);
+
 				HttpUrl.Builder urlBuilder = HttpUrl.parse(urlParams).newBuilder();
 				urlBuilder.addQueryParameter("shouldDecrement", "false");
 				String url = urlBuilder.build().toString();
-				
-				RequestBody body = RequestBody.create(new byte[0],null);
-				
+
+				RequestBody body = RequestBody.create(new byte[0], null);
+
 				Request okRequest = new Request.Builder().url(url).method("PUT", body).build();
 
 				Call call = client.newCall(okRequest);
@@ -202,11 +223,16 @@ public class ProfileController {
 					call.execute();
 
 				} catch (IOException e) {
-					e.printStackTrace();
+					goodCall = false;
 				}
 			} catch (Exception e) {
-				e.printStackTrace();
+				goodCall = false;
 			}
+		}
+
+		if (!goodCall) {
+			dbQueryStatus = new DbQueryStatus("FAILED TO MAKE REQUEST TO MONGODB",
+					DbQueryExecResult.QUERY_ERROR_GENERIC);
 		}
 
 		response = Utils.setResponseStatus(response, dbQueryStatus.getdbQueryExecResult(), dbQueryStatus.getData());
@@ -223,16 +249,18 @@ public class ProfileController {
 
 		DbQueryStatus dbQueryStatus = playlistDriver.unlikeSong(userName, songId);
 
+		boolean goodCall = true;
+
 		if (dbQueryStatus.getdbQueryExecResult().equals(DbQueryExecResult.QUERY_OK)) {
 			try {
-				String urlParams = String.format("http://localhost:3001/updateSongFavouritesCount/%s", songId); 
-				
+				String urlParams = String.format("http://localhost:3001/updateSongFavouritesCount/%s", songId);
+
 				HttpUrl.Builder urlBuilder = HttpUrl.parse(urlParams).newBuilder();
 				urlBuilder.addQueryParameter("shouldDecrement", "true");
 				String url = urlBuilder.build().toString();
-				
-				RequestBody body = RequestBody.create(new byte[0],null);
-				
+
+				RequestBody body = RequestBody.create(new byte[0], null);
+
 				Request okRequest = new Request.Builder().url(url).method("PUT", body).build();
 
 				Call call = client.newCall(okRequest);
@@ -241,13 +269,18 @@ public class ProfileController {
 					call.execute();
 
 				} catch (IOException e) {
-					e.printStackTrace();
+					goodCall = false;
 				}
 			} catch (Exception e) {
-				e.printStackTrace();
+				goodCall = false;
 			}
 		}
-		
+
+		if (!goodCall) {
+			dbQueryStatus = new DbQueryStatus("FAILED TO MAKE REQUEST TO MONGODB",
+					DbQueryExecResult.QUERY_ERROR_GENERIC);
+		}
+
 		response = Utils.setResponseStatus(response, dbQueryStatus.getdbQueryExecResult(), dbQueryStatus.getData());
 
 		return response;

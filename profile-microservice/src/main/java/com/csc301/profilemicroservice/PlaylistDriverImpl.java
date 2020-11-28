@@ -30,10 +30,12 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 			session.close();
 		}
 	}
-	
+
 	public DbQueryStatus addSong(String songId) {
 
 		DbQueryStatus queryStatus;
+
+		boolean goodConnection = true;
 
 		if (songId == null) {
 			queryStatus = new DbQueryStatus("MISSING BODY PARAMETER", DbQueryExecResult.QUERY_ERROR_GENERIC);
@@ -42,17 +44,26 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 				try (Transaction trans = session.beginTransaction()) {
 					Map<String, Object> params = new HashMap<String, Object>();
 					params.put("songId", songId);
-					
+
 					String queryStr = "MERGE (s:song {songId: $songId})";
 					trans.run(queryStr, params);
 
 					trans.success();
 
+				} catch (Exception e) {
+					goodConnection = false;
 				}
 				session.close();
+			} catch (Exception e) {
+				goodConnection = false;
 			}
 
-			queryStatus = new DbQueryStatus("OK", DbQueryExecResult.QUERY_OK);
+			if (goodConnection) {
+				queryStatus = new DbQueryStatus("OK", DbQueryExecResult.QUERY_OK);
+			} else {
+				queryStatus = new DbQueryStatus("FAILED TO CONNECT TO NEO4J", DbQueryExecResult.QUERY_ERROR_GENERIC);
+			}
+
 		}
 
 		return queryStatus;
@@ -63,6 +74,8 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 
 		DbQueryStatus queryStatus;
 
+		boolean goodConnection = true;
+
 		if (userName == null || songId == null) {
 			queryStatus = new DbQueryStatus("MISSING BODY PARAMETER", DbQueryExecResult.QUERY_ERROR_GENERIC);
 		} else {
@@ -70,23 +83,31 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 				try (Transaction trans = session.beginTransaction()) {
 					Map<String, Object> params = new HashMap<String, Object>();
 					params.put("songId", songId);
-					
+
 					String queryStr = "MATCH (s:song) WHERE s.songId = $songId RETURN s";
 					StatementResult result = trans.run(queryStr, params);
-					
+
 					if (result.hasNext()) {
-						params.put("playlistName", userName+"-favorites");
-						queryStr = "MATCH (pl:playlist), (s:song) WHERE pl.plName = $playlistName AND s.songId = $songId CREATE (pl)-[:includes]->(s)";
+						params.put("playlistName", userName + "-favorites");
+						queryStr = "MATCH (pl:playlist), (s:song) WHERE pl.plName = $playlistName AND s.songId = $songId MERGE (pl)-[:includes]->(s)";
 						trans.run(queryStr, params);
 					}
 
 					trans.success();
 
+				} catch (Exception e) {
+					goodConnection = false;
 				}
 				session.close();
+			} catch (Exception e) {
+				goodConnection = false;
 			}
 
-			queryStatus = new DbQueryStatus("OK", DbQueryExecResult.QUERY_OK);
+			if (goodConnection) {
+				queryStatus = new DbQueryStatus("OK", DbQueryExecResult.QUERY_OK);
+			} else {
+				queryStatus = new DbQueryStatus("FAILED TO CONNECT TO NEO4J", DbQueryExecResult.QUERY_ERROR_GENERIC);
+			}
 		}
 
 		return queryStatus;
@@ -97,25 +118,35 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 
 		DbQueryStatus queryStatus;
 
+		boolean goodConnection = true;
+
 		if (userName == null || songId == null) {
 			queryStatus = new DbQueryStatus("MISSING BODY PARAMETER", DbQueryExecResult.QUERY_ERROR_GENERIC);
 		} else {
 			try (Session session = ProfileMicroserviceApplication.driver.session()) {
 				try (Transaction trans = session.beginTransaction()) {
 					Map<String, Object> params = new HashMap<String, Object>();
-					params.put("songId", songId);					
-					params.put("playlistName", userName+"-favorites");
-					
+					params.put("songId", songId);
+					params.put("playlistName", userName + "-favorites");
+
 					String queryStr = "MATCH (:playlist {plName: $playlistName})-[i:includes]->(:song {songId: $songId}) DELETE i";
 					trans.run(queryStr, params);
 
 					trans.success();
 
+				} catch (Exception e) {
+					goodConnection = false;
 				}
 				session.close();
+			} catch (Exception e) {
+				goodConnection = false;
 			}
 
-			queryStatus = new DbQueryStatus("OK", DbQueryExecResult.QUERY_OK);
+			if (goodConnection) {
+				queryStatus = new DbQueryStatus("OK", DbQueryExecResult.QUERY_OK);
+			} else {
+				queryStatus = new DbQueryStatus("FAILED TO CONNECT TO NEO4J", DbQueryExecResult.QUERY_ERROR_GENERIC);
+			}
 		}
 
 		return queryStatus;
@@ -126,6 +157,8 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 
 		DbQueryStatus queryStatus;
 
+		boolean goodConnection = true;
+
 		if (songId == null) {
 			queryStatus = new DbQueryStatus("MISSING BODY PARAMETER", DbQueryExecResult.QUERY_ERROR_GENERIC);
 		} else {
@@ -133,17 +166,25 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 				try (Transaction trans = session.beginTransaction()) {
 					Map<String, Object> params = new HashMap<String, Object>();
 					params.put("songId", songId);
-					
+
 					String queryStr = "MATCH (s:song) WHERE s.songId = $songId DETACH DELETE s";
 					trans.run(queryStr, params);
 
 					trans.success();
 
+				} catch (Exception e) {
+					goodConnection = false;
 				}
 				session.close();
+			} catch (Exception e) {
+				goodConnection = false;
 			}
 
-			queryStatus = new DbQueryStatus("OK", DbQueryExecResult.QUERY_OK);
+			if (goodConnection) {
+				queryStatus = new DbQueryStatus("OK", DbQueryExecResult.QUERY_OK);
+			} else {
+				queryStatus = new DbQueryStatus("FAILED TO CONNECT TO NEO4J", DbQueryExecResult.QUERY_ERROR_GENERIC);
+			}
 		}
 
 		return queryStatus;
