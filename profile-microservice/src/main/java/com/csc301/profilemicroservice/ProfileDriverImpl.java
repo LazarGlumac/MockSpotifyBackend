@@ -68,7 +68,7 @@ public class ProfileDriverImpl implements ProfileDriver {
 						queryStr = "CREATE (p:profile {userName: $username, fullName: $fullname, password: $password})";
 						trans.run(queryStr, params);
 
-						queryStr = "CREATE (p:playlist {plName: $playlistName})";
+						queryStr = "MERGE (p:playlist {plName: $playlistName})";
 						trans.run(queryStr, params);
 
 						queryStr = "MATCH (p:profile), (pl:playlist) WHERE p.userName = $username AND pl.plName = $playlistName CREATE (p)-[:created]->(pl)";

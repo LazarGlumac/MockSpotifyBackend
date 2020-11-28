@@ -60,8 +60,8 @@ public class ProfileController {
 		Map<String, Object> response = new HashMap<String, Object>();
 		response.put("path", String.format("POST %s", Utils.getUrl(request)));
 
-		DbQueryStatus dbQueryStatus = profileDriver.createUserProfile(params.get(KEY_USER_NAME), params.get(KEY_USER_FULLNAME),
-				params.get(KEY_USER_PASSWORD));
+		DbQueryStatus dbQueryStatus = profileDriver.createUserProfile(params.get(KEY_USER_NAME),
+				params.get(KEY_USER_FULLNAME), params.get(KEY_USER_PASSWORD));
 
 		response = Utils.setResponseStatus(response, dbQueryStatus.getdbQueryExecResult(), dbQueryStatus.getData());
 
@@ -83,8 +83,8 @@ public class ProfileController {
 	}
 
 	@RequestMapping(value = "/getAllFriendFavouriteSongTitles/{userName}", method = RequestMethod.GET)
-	public @ResponseBody Map<String, Object> getAllFriendFavouriteSongTitles(@PathVariable(KEY_USER_NAME) String userName,
-			HttpServletRequest request) {
+	public @ResponseBody Map<String, Object> getAllFriendFavouriteSongTitles(
+			@PathVariable(KEY_USER_NAME) String userName, HttpServletRequest request) {
 
 		Map<String, Object> response = new HashMap<String, Object>();
 		response.put("path", String.format("PUT %s", Utils.getUrl(request)));
@@ -122,23 +122,17 @@ public class ProfileController {
 
 							Response responseFromAddMs = null;
 
-							try {
-								responseFromAddMs = call.execute();
-								String getSongIdBody = responseFromAddMs.body().string();
+							responseFromAddMs = call.execute();
+							String getSongIdBody = responseFromAddMs.body().string();
 
-								if (mapper.readValue(getSongIdBody, Map.class).get("status").toString().equals("OK")) {
-									songTitles.add(mapper.readValue(getSongIdBody, Map.class).get("data").toString());
-								} else {
-									if (!mapper.readValue(getSongIdBody, Map.class).get("status").toString()
-											.equals("NOT_FOUND")) {
-										goodCall = false;
-										break;
-									}
+							if (mapper.readValue(getSongIdBody, Map.class).get("status").toString().equals("OK")) {
+								songTitles.add(mapper.readValue(getSongIdBody, Map.class).get("data").toString());
+							} else {
+								if (!mapper.readValue(getSongIdBody, Map.class).get("status").toString()
+										.equals("NOT_FOUND")) {
+									goodCall = false;
+									break;
 								}
-
-							} catch (IOException e) {
-								goodCall = false;
-								break;
 							}
 						} catch (Exception e) {
 							goodCall = false;
@@ -221,12 +215,8 @@ public class ProfileController {
 
 				Call call = client.newCall(okRequest);
 
-				try {
-					call.execute();
+				call.execute();
 
-				} catch (IOException e) {
-					goodCall = false;
-				}
 			} catch (Exception e) {
 				goodCall = false;
 			}
@@ -267,12 +257,8 @@ public class ProfileController {
 
 				Call call = client.newCall(okRequest);
 
-				try {
-					call.execute();
+				call.execute();
 
-				} catch (IOException e) {
-					goodCall = false;
-				}
 			} catch (Exception e) {
 				goodCall = false;
 			}
