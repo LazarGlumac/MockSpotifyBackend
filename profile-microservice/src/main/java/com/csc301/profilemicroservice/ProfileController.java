@@ -37,6 +37,8 @@ public class ProfileController {
 	public static final String KEY_USER_NAME = "userName";
 	public static final String KEY_USER_FULLNAME = "fullName";
 	public static final String KEY_USER_PASSWORD = "password";
+	public static final String KEY_FRIEND_USERNAME = "friendUserName";
+	public static final String KEY_SONGID = "songId";
 
 	@Autowired
 	private final ProfileDriverImpl profileDriver;
@@ -58,8 +60,8 @@ public class ProfileController {
 		Map<String, Object> response = new HashMap<String, Object>();
 		response.put("path", String.format("POST %s", Utils.getUrl(request)));
 
-		DbQueryStatus dbQueryStatus = profileDriver.createUserProfile(params.get("userName"), params.get("fullName"),
-				params.get("password"));
+		DbQueryStatus dbQueryStatus = profileDriver.createUserProfile(params.get(KEY_USER_NAME), params.get(KEY_USER_FULLNAME),
+				params.get(KEY_USER_PASSWORD));
 
 		response = Utils.setResponseStatus(response, dbQueryStatus.getdbQueryExecResult(), dbQueryStatus.getData());
 
@@ -67,8 +69,8 @@ public class ProfileController {
 	}
 
 	@RequestMapping(value = "/followFriend/{userName}/{friendUserName}", method = RequestMethod.PUT)
-	public @ResponseBody Map<String, Object> followFriend(@PathVariable("userName") String userName,
-			@PathVariable("friendUserName") String friendUserName, HttpServletRequest request) {
+	public @ResponseBody Map<String, Object> followFriend(@PathVariable(KEY_USER_NAME) String userName,
+			@PathVariable(KEY_FRIEND_USERNAME) String friendUserName, HttpServletRequest request) {
 
 		Map<String, Object> response = new HashMap<String, Object>();
 		response.put("path", String.format("PUT %s", Utils.getUrl(request)));
@@ -81,7 +83,7 @@ public class ProfileController {
 	}
 
 	@RequestMapping(value = "/getAllFriendFavouriteSongTitles/{userName}", method = RequestMethod.GET)
-	public @ResponseBody Map<String, Object> getAllFriendFavouriteSongTitles(@PathVariable("userName") String userName,
+	public @ResponseBody Map<String, Object> getAllFriendFavouriteSongTitles(@PathVariable(KEY_USER_NAME) String userName,
 			HttpServletRequest request) {
 
 		Map<String, Object> response = new HashMap<String, Object>();
@@ -167,8 +169,8 @@ public class ProfileController {
 	}
 
 	@RequestMapping(value = "/unfollowFriend/{userName}/{friendUserName}", method = RequestMethod.PUT)
-	public @ResponseBody Map<String, Object> unfollowFriend(@PathVariable("userName") String userName,
-			@PathVariable("friendUserName") String friendUserName, HttpServletRequest request) {
+	public @ResponseBody Map<String, Object> unfollowFriend(@PathVariable(KEY_USER_NAME) String userName,
+			@PathVariable(KEY_FRIEND_USERNAME) String friendUserName, HttpServletRequest request) {
 
 		Map<String, Object> response = new HashMap<String, Object>();
 		response.put("path", String.format("PUT %s", Utils.getUrl(request)));
@@ -181,7 +183,7 @@ public class ProfileController {
 	}
 
 	@RequestMapping(value = "/addSong/{songId}", method = RequestMethod.PUT)
-	public @ResponseBody Map<String, Object> addSong(@PathVariable("songId") String songId,
+	public @ResponseBody Map<String, Object> addSong(@PathVariable(KEY_SONGID) String songId,
 			HttpServletRequest request) {
 
 		Map<String, Object> response = new HashMap<String, Object>();
@@ -195,8 +197,8 @@ public class ProfileController {
 	}
 
 	@RequestMapping(value = "/likeSong/{userName}/{songId}", method = RequestMethod.PUT)
-	public @ResponseBody Map<String, Object> likeSong(@PathVariable("userName") String userName,
-			@PathVariable("songId") String songId, HttpServletRequest request) {
+	public @ResponseBody Map<String, Object> likeSong(@PathVariable(KEY_USER_NAME) String userName,
+			@PathVariable(KEY_SONGID) String songId, HttpServletRequest request) {
 
 		Map<String, Object> response = new HashMap<String, Object>();
 		response.put("path", String.format("PUT %s", Utils.getUrl(request)));
@@ -241,8 +243,8 @@ public class ProfileController {
 	}
 
 	@RequestMapping(value = "/unlikeSong/{userName}/{songId}", method = RequestMethod.PUT)
-	public @ResponseBody Map<String, Object> unlikeSong(@PathVariable("userName") String userName,
-			@PathVariable("songId") String songId, HttpServletRequest request) {
+	public @ResponseBody Map<String, Object> unlikeSong(@PathVariable(KEY_USER_NAME) String userName,
+			@PathVariable(KEY_SONGID) String songId, HttpServletRequest request) {
 
 		Map<String, Object> response = new HashMap<String, Object>();
 		response.put("path", String.format("PUT %s", Utils.getUrl(request)));
@@ -287,7 +289,7 @@ public class ProfileController {
 	}
 
 	@RequestMapping(value = "/deleteAllSongsFromDb/{songId}", method = RequestMethod.PUT)
-	public @ResponseBody Map<String, Object> deleteAllSongsFromDb(@PathVariable("songId") String songId,
+	public @ResponseBody Map<String, Object> deleteAllSongsFromDb(@PathVariable(KEY_SONGID) String songId,
 			HttpServletRequest request) {
 
 		Map<String, Object> response = new HashMap<String, Object>();
