@@ -71,7 +71,7 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 					Map<String, Object> params = new HashMap<String, Object>();
 					params.put("songId", songId);
 					
-					String queryStr = "MATCH (s:song) WHERE s.songId = $songId";
+					String queryStr = "MATCH (s:song) WHERE s.songId = $songId RETURN s";
 					StatementResult result = trans.run(queryStr, params);
 					
 					if (result.hasNext()) {
