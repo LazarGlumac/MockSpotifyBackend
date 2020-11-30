@@ -40,6 +40,12 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 		if (songId == null) {
 			queryStatus = new DbQueryStatus("MISSING BODY PARAMETER", DbQueryExecResult.QUERY_ERROR_GENERIC);
 		} else {
+			
+			if (!songExists(songId)) {
+				System.out.println("user or song DNE");
+				return new DbQueryStatus("SONG DNE", DbQueryExecResult.QUERY_ERROR_GENERIC);
+			}
+			
 			try (Session session = ProfileMicroserviceApplication.driver.session()) {
 				try (Transaction trans = session.beginTransaction()) {
 					Map<String, Object> params = new HashMap<String, Object>();
@@ -80,6 +86,12 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 		if (userName == null || songId == null) {
 			queryStatus = new DbQueryStatus("MISSING BODY PARAMETER", DbQueryExecResult.QUERY_ERROR_GENERIC);
 		} else {
+			
+			if (!songExists(songId) || !userExists(userName)) {
+				System.out.println("user or song DNE");
+				return new DbQueryStatus("SONG OR USER DNE", DbQueryExecResult.QUERY_ERROR_GENERIC);
+			}
+			
 			try (Session session = ProfileMicroserviceApplication.driver.session()) {
 				try (Transaction trans = session.beginTransaction()) {
 					Map<String, Object> params = new HashMap<String, Object>();
@@ -140,6 +152,12 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 		if (userName == null || songId == null) {
 			queryStatus = new DbQueryStatus("MISSING BODY PARAMETER", DbQueryExecResult.QUERY_ERROR_GENERIC);
 		} else {
+			
+			if (!songExists(songId) || !userExists(userName)) {
+				System.out.println("user or song DNE");
+				return new DbQueryStatus("SONG OR USER DNE", DbQueryExecResult.QUERY_ERROR_GENERIC);
+			}
+			
 			try (Session session = ProfileMicroserviceApplication.driver.session()) {
 				try (Transaction trans = session.beginTransaction()) {
 					Map<String, Object> params = new HashMap<String, Object>();
@@ -190,6 +208,12 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 		if (songId == null) {
 			queryStatus = new DbQueryStatus("MISSING BODY PARAMETER", DbQueryExecResult.QUERY_ERROR_GENERIC);
 		} else {
+			
+			if (!songExists(songId)) {
+				System.out.println("user or song DNE");
+				return new DbQueryStatus("SONG DNE", DbQueryExecResult.QUERY_ERROR_GENERIC);
+			}
+			
 			try (Session session = ProfileMicroserviceApplication.driver.session()) {
 				try (Transaction trans = session.beginTransaction()) {
 					Map<String, Object> params = new HashMap<String, Object>();
@@ -216,5 +240,57 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 		}
 
 		return queryStatus;
+	}
+	
+	public boolean userExists(String username) {
+		boolean exists = false;
+		
+		try (Session session = ProfileMicroserviceApplication.driver.session()) {
+			try (Transaction trans = session.beginTransaction()) {
+				Map<String, Object> params = new HashMap<String, Object>();
+				params.put("username", username);
+
+				String queryStr = "MATCH (p:profile) WHERE p.userName = $username return p";
+				StatementResult result  = trans.run(queryStr, params);
+				
+				if (result.hasNext()) {
+					exists = true;
+				}
+
+				trans.success();
+
+			} catch (Exception e) {
+			}
+			session.close();
+		} catch (Exception e) {
+		}
+		
+		return exists;
+	}
+	
+	public boolean songExists(String songId) {
+		boolean exists = false;
+		
+		try (Session session = ProfileMicroserviceApplication.driver.session()) {
+			try (Transaction trans = session.beginTransaction()) {
+				Map<String, Object> params = new HashMap<String, Object>();
+				params.put("songId", songId);
+
+				String queryStr = "MATCH (s:song) WHERE s.songId = $songId return s";
+				StatementResult result  = trans.run(queryStr, params);
+				
+				if (result.hasNext()) {
+					exists = true;
+				}
+
+				trans.success();
+
+			} catch (Exception e) {
+			}
+			session.close();
+		} catch (Exception e) {
+		}
+		
+		return exists;
 	}
 }

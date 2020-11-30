@@ -113,6 +113,12 @@ public class ProfileDriverImpl implements ProfileDriver {
 		if (userName == null || frndUserName == null) {
 			queryStatus = new DbQueryStatus("MISSING BODY PARAMETER", DbQueryExecResult.QUERY_ERROR_GENERIC);
 		} else {
+			
+			if (!userExists(userName) || !userExists(frndUserName)) {
+				System.out.println("user or song DNE");
+				return new DbQueryStatus("ONE OR MORE USERS NON-EXISTENT", DbQueryExecResult.QUERY_ERROR_GENERIC);
+			}
+			
 			try (Session session = ProfileMicroserviceApplication.driver.session()) {
 				try (Transaction trans = session.beginTransaction()) {
 					Map<String, Object> params = new HashMap<String, Object>();
@@ -163,6 +169,13 @@ public class ProfileDriverImpl implements ProfileDriver {
 		if (userName == null || frndUserName == null) {
 			queryStatus = new DbQueryStatus("MISSING BODY PARAMETER", DbQueryExecResult.QUERY_ERROR_GENERIC);
 		} else {
+			
+			if (!userExists(userName) || !userExists(frndUserName)) {
+				System.out.println("user or song DNE");
+				return new DbQueryStatus("ONE OR MORE USERS NON-EXISTENT", DbQueryExecResult.QUERY_ERROR_GENERIC);
+			}
+			
+			
 			try (Session session = ProfileMicroserviceApplication.driver.session()) {
 				try (Transaction trans = session.beginTransaction()) {
 					Map<String, Object> params = new HashMap<String, Object>();
@@ -213,6 +226,11 @@ public class ProfileDriverImpl implements ProfileDriver {
 		if (userName == null) {
 			queryStatus = new DbQueryStatus("MISSING BODY PARAMETER", DbQueryExecResult.QUERY_ERROR_GENERIC);
 		} else {
+			if (!userExists(userName)) {
+				System.out.println("user or song DNE");
+				return new DbQueryStatus("USER NON-EXISTENT", DbQueryExecResult.QUERY_ERROR_GENERIC);
+			}
+			
 			JSONObject allSongsFriendsLike = new JSONObject();
 
 			try (Session session = ProfileMicroserviceApplication.driver.session()) {
@@ -268,5 +286,31 @@ public class ProfileDriverImpl implements ProfileDriver {
 		}
 
 		return queryStatus;
+	}
+	
+	public boolean userExists(String username) {
+		boolean exists = false;
+		
+		try (Session session = ProfileMicroserviceApplication.driver.session()) {
+			try (Transaction trans = session.beginTransaction()) {
+				Map<String, Object> params = new HashMap<String, Object>();
+				params.put("username", username);
+
+				String queryStr = "MATCH (p:profile) WHERE p.userName = $username return p";
+				StatementResult result  = trans.run(queryStr, params);
+				
+				if (result.hasNext()) {
+					exists = true;
+				}
+
+				trans.success();
+
+			} catch (Exception e) {
+			}
+			session.close();
+		} catch (Exception e) {
+		}
+		
+		return exists;
 	}
 }
