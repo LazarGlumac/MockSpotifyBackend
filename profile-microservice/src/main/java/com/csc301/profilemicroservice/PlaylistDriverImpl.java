@@ -91,10 +91,10 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 					if (result.hasNext()) {
 						params.put("playlistName", userName + "-favorites");
 						
-						queryStr = "MATCH (:playlist {plName: $playlistName})-[i:includes]->(:song {songId: $songId}) return i";
+						queryStr = "RETURN EXISTS ((:playlist {plName: $playlistName})-[:includes]->(:song {songId: $songId}))";
 						result  = trans.run(queryStr, params);
 						
-						if (!result.hasNext()) {
+						if (result.next().get(0).toString().equals("FALSE")) {
 							queryStr = "MATCH (pl:playlist), (s:song) WHERE pl.plName = $playlistName AND s.songId = $songId MERGE (pl)-[:includes]->(s)";
 							trans.run(queryStr, params);
 						} else {
@@ -146,10 +146,10 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 					params.put("songId", songId);
 					params.put("playlistName", userName + "-favorites");
 
-					String queryStr = "MATCH (:playlist {plName: $playlistName})-[i:includes]->(:song {songId: $songId}) return i";
-					StatementResult result = trans.run(queryStr, params);
+					String queryStr = "RETURN EXISTS ((:playlist {plName: $playlistName})-[:includes]->(:song {songId: $songId}))";
+					StatementResult result  = trans.run(queryStr, params);
 					
-					if (result.hasNext()) {
+					if (result.next().get(0).toString().equals("TRUE")) {
 						queryStr = "MATCH (:playlist {plName: $playlistName})-[i:includes]->(:song {songId: $songId}) DELETE i";
 						trans.run(queryStr, params);
 						hasBeenLiked = true;

@@ -97,7 +97,7 @@ public class ProfileController {
 
 			ObjectMapper mapper = new ObjectMapper();
 			Map<String, Object> friendsFavoriteSongTitles = mapper.convertValue(data, Map.class);
-
+			
 			Iterator<Entry<String, Object>> mapIterator = friendsFavoriteSongTitles.entrySet().iterator();
 
 			boolean goodCall = true;
