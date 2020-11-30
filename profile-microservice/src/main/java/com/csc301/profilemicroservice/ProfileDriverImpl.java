@@ -108,6 +108,7 @@ public class ProfileDriverImpl implements ProfileDriver {
 		DbQueryStatus queryStatus;
 
 		boolean goodConnection = true;
+		boolean alreadyFollows = true;
 
 		if (userName == null || frndUserName == null) {
 			queryStatus = new DbQueryStatus("MISSING BODY PARAMETER", DbQueryExecResult.QUERY_ERROR_GENERIC);
@@ -118,8 +119,14 @@ public class ProfileDriverImpl implements ProfileDriver {
 					params.put("username", userName);
 					params.put("friendUsername", frndUserName);
 
-					String queryStr = "MATCH (p1:profile), (p2:profile) WHERE p1.userName = $username AND p2.userName = $friendUsername MERGE (p1)-[:follows]->(p2)";
-					trans.run(queryStr, params);
+					String queryStr = "RETURN EXISTS ((:profile {userName: $username})-[:follows]->(:profile {userName: $friendUsername}))";
+					StatementResult result  = trans.run(queryStr, params);
+										
+					if (result.next().get(0).toString().equals("FALSE")) {						
+						queryStr = "MATCH (p1:profile), (p2:profile) WHERE p1.userName = $username AND p2.userName = $friendUsername MERGE (p1)-[:follows]->(p2)";
+						trans.run(queryStr, params);
+						alreadyFollows = false;
+					}
 
 					trans.success();
 
@@ -132,7 +139,12 @@ public class ProfileDriverImpl implements ProfileDriver {
 			}
 
 			if (goodConnection) {
-				queryStatus = new DbQueryStatus("OK", DbQueryExecResult.QUERY_OK);
+				if (!alreadyFollows) {
+					queryStatus = new DbQueryStatus("OK", DbQueryExecResult.QUERY_OK);
+				} else {
+					queryStatus = new DbQueryStatus("ALREADY FOLLOWING", DbQueryExecResult.QUERY_ERROR_GENERIC);
+				}
+				
 			} else {
 				queryStatus = new DbQueryStatus("FAILED TO CONNECT TO NEO4J", DbQueryExecResult.QUERY_ERROR_GENERIC);
 			}
@@ -146,6 +158,7 @@ public class ProfileDriverImpl implements ProfileDriver {
 		DbQueryStatus queryStatus;
 
 		boolean goodConnection = true;
+		boolean alreadyFollows = false;
 
 		if (userName == null || frndUserName == null) {
 			queryStatus = new DbQueryStatus("MISSING BODY PARAMETER", DbQueryExecResult.QUERY_ERROR_GENERIC);
@@ -156,8 +169,14 @@ public class ProfileDriverImpl implements ProfileDriver {
 					params.put("username", userName);
 					params.put("friendUsername", frndUserName);
 
-					String queryStr = "MATCH (:profile {userName: $username})-[f:follows]->(:profile {userName: $friendUsername}) DELETE f";
-					trans.run(queryStr, params);
+					String queryStr = "RETURN EXISTS ((:profile {userName: $username})-[:follows]->(:profile {userName: $friendUsername}))";
+					StatementResult result  = trans.run(queryStr, params);
+					
+					if (result.next().get(0).toString().equals("TRUE")) {
+						queryStr = "MATCH (:profile {userName: $username})-[f:follows]->(:profile {userName: $friendUsername}) DELETE f";
+						trans.run(queryStr, params);
+						alreadyFollows = true;
+					}
 
 					trans.success();
 
@@ -170,7 +189,12 @@ public class ProfileDriverImpl implements ProfileDriver {
 			}
 
 			if (goodConnection) {
-				queryStatus = new DbQueryStatus("OK", DbQueryExecResult.QUERY_OK);
+				if (alreadyFollows) {
+					queryStatus = new DbQueryStatus("OK", DbQueryExecResult.QUERY_OK);
+				} else {
+					queryStatus = new DbQueryStatus("NOT EVEN FOLLOWING USER", DbQueryExecResult.QUERY_ERROR_GENERIC);
+				}
+				
 			} else {
 				queryStatus = new DbQueryStatus("FAILED TO CONNECT TO NEO4J", DbQueryExecResult.QUERY_ERROR_GENERIC);
 			}

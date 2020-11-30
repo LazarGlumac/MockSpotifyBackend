@@ -75,6 +75,7 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 		DbQueryStatus queryStatus;
 
 		boolean goodConnection = true;
+		boolean alreadyLiked = false;
 
 		if (userName == null || songId == null) {
 			queryStatus = new DbQueryStatus("MISSING BODY PARAMETER", DbQueryExecResult.QUERY_ERROR_GENERIC);
@@ -89,8 +90,17 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 
 					if (result.hasNext()) {
 						params.put("playlistName", userName + "-favorites");
-						queryStr = "MATCH (pl:playlist), (s:song) WHERE pl.plName = $playlistName AND s.songId = $songId MERGE (pl)-[:includes]->(s)";
-						trans.run(queryStr, params);
+						
+						queryStr = "RETURN EXISTS ((:playlist {plName: $playlistName})-[:includes]->(:song {songId: $songId}))";
+						result  = trans.run(queryStr, params);
+						
+						if (result.next().get(0).toString().equals("FALSE")) {
+							queryStr = "MATCH (pl:playlist), (s:song) WHERE pl.plName = $playlistName AND s.songId = $songId MERGE (pl)-[:includes]->(s)";
+							trans.run(queryStr, params);
+						} else {
+							alreadyLiked = true;
+						}
+						
 					}
 
 					trans.success();
@@ -104,7 +114,13 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 			}
 
 			if (goodConnection) {
-				queryStatus = new DbQueryStatus("OK", DbQueryExecResult.QUERY_OK);
+				if (!alreadyLiked) {
+					queryStatus = new DbQueryStatus("OK", DbQueryExecResult.QUERY_OK);
+				} else {
+					queryStatus = new DbQueryStatus("ALREADY LIKED", DbQueryExecResult.QUERY_OK);
+				}
+				
+				
 			} else {
 				queryStatus = new DbQueryStatus("FAILED TO CONNECT TO NEO4J", DbQueryExecResult.QUERY_ERROR_GENERIC);
 			}
@@ -119,6 +135,7 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 		DbQueryStatus queryStatus;
 
 		boolean goodConnection = true;
+		boolean hasBeenLiked = false;
 
 		if (userName == null || songId == null) {
 			queryStatus = new DbQueryStatus("MISSING BODY PARAMETER", DbQueryExecResult.QUERY_ERROR_GENERIC);
@@ -129,8 +146,14 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 					params.put("songId", songId);
 					params.put("playlistName", userName + "-favorites");
 
-					String queryStr = "MATCH (:playlist {plName: $playlistName})-[i:includes]->(:song {songId: $songId}) DELETE i";
-					trans.run(queryStr, params);
+					String queryStr = "RETURN EXISTS ((:playlist {plName: $playlistName})-[:includes]->(:song {songId: $songId}))";
+					StatementResult result  = trans.run(queryStr, params);
+					
+					if (result.next().get(0).toString().equals("TRUE")) {
+						queryStr = "MATCH (:playlist {plName: $playlistName})-[i:includes]->(:song {songId: $songId}) DELETE i";
+						trans.run(queryStr, params);
+						hasBeenLiked = true;
+					}
 
 					trans.success();
 
@@ -141,9 +164,14 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 			} catch (Exception e) {
 				goodConnection = false;
 			}
-
+			
 			if (goodConnection) {
-				queryStatus = new DbQueryStatus("OK", DbQueryExecResult.QUERY_OK);
+				if (hasBeenLiked) {
+					queryStatus = new DbQueryStatus("OK", DbQueryExecResult.QUERY_OK);
+				} else {
+					queryStatus = new DbQueryStatus("SONG NOT IN USER'S FAVORITES", DbQueryExecResult.QUERY_ERROR_GENERIC);
+				}
+				
 			} else {
 				queryStatus = new DbQueryStatus("FAILED TO CONNECT TO NEO4J", DbQueryExecResult.QUERY_ERROR_GENERIC);
 			}

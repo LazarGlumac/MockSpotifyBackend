@@ -97,7 +97,7 @@ public class ProfileController {
 
 			ObjectMapper mapper = new ObjectMapper();
 			Map<String, Object> friendsFavoriteSongTitles = mapper.convertValue(data, Map.class);
-
+			
 			Iterator<Entry<String, Object>> mapIterator = friendsFavoriteSongTitles.entrySet().iterator();
 
 			boolean goodCall = true;
@@ -120,10 +120,10 @@ public class ProfileController {
 
 							Call call = client.newCall(okRequest);
 
-							Response responseFromAddMs = null;
+							Response responseGSTBI = null;
 
-							responseFromAddMs = call.execute();
-							String getSongIdBody = responseFromAddMs.body().string();
+							responseGSTBI = call.execute();
+							String getSongIdBody = responseGSTBI.body().string();
 
 							if (mapper.readValue(getSongIdBody, Map.class).get("status").toString().equals("OK")) {
 								songTitles.add(mapper.readValue(getSongIdBody, Map.class).get("data").toString());
@@ -200,8 +200,8 @@ public class ProfileController {
 		DbQueryStatus dbQueryStatus = playlistDriver.likeSong(userName, songId);
 
 		boolean goodCall = true;
-
-		if (dbQueryStatus.getdbQueryExecResult().equals(DbQueryExecResult.QUERY_OK)) {
+		
+		if (dbQueryStatus.getMessage().equals("OK")) {
 			try {
 				String urlParams = String.format("http://localhost:3001/updateSongFavouritesCount/%s", songId);
 
