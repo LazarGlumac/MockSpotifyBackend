@@ -42,7 +42,6 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 		} else {
 			
 			if (!songExists(songId)) {
-				System.out.println("user or song DNE");
 				return new DbQueryStatus("SONG DNE", DbQueryExecResult.QUERY_ERROR_GENERIC);
 			}
 			
@@ -88,7 +87,6 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 		} else {
 			
 			if (!songExists(songId) || !userExists(userName)) {
-				System.out.println("user or song DNE");
 				return new DbQueryStatus("SONG OR USER DNE", DbQueryExecResult.QUERY_ERROR_GENERIC);
 			}
 			
@@ -154,7 +152,6 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 		} else {
 			
 			if (!songExists(songId) || !userExists(userName)) {
-				System.out.println("user or song DNE");
 				return new DbQueryStatus("SONG OR USER DNE", DbQueryExecResult.QUERY_ERROR_GENERIC);
 			}
 			
@@ -210,7 +207,6 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 		} else {
 			
 			if (!songExists(songId)) {
-				System.out.println("user or song DNE");
 				return new DbQueryStatus("SONG DNE", DbQueryExecResult.QUERY_ERROR_GENERIC);
 			}
 			

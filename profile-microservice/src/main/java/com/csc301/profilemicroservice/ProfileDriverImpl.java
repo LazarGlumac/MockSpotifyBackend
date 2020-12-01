@@ -115,7 +115,6 @@ public class ProfileDriverImpl implements ProfileDriver {
 		} else {
 			
 			if (!userExists(userName) || !userExists(frndUserName)) {
-				System.out.println("user or song DNE");
 				return new DbQueryStatus("ONE OR MORE USERS NON-EXISTENT", DbQueryExecResult.QUERY_ERROR_GENERIC);
 			}
 			
@@ -171,7 +170,6 @@ public class ProfileDriverImpl implements ProfileDriver {
 		} else {
 			
 			if (!userExists(userName) || !userExists(frndUserName)) {
-				System.out.println("user or song DNE");
 				return new DbQueryStatus("ONE OR MORE USERS NON-EXISTENT", DbQueryExecResult.QUERY_ERROR_GENERIC);
 			}
 			
@@ -227,7 +225,6 @@ public class ProfileDriverImpl implements ProfileDriver {
 			queryStatus = new DbQueryStatus("MISSING BODY PARAMETER", DbQueryExecResult.QUERY_ERROR_GENERIC);
 		} else {
 			if (!userExists(userName)) {
-				System.out.println("user or song DNE");
 				return new DbQueryStatus("USER NON-EXISTENT", DbQueryExecResult.QUERY_ERROR_GENERIC);
 			}
 			
