@@ -41,7 +41,7 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 			queryStatus = new DbQueryStatus("MISSING BODY PARAMETER", DbQueryExecResult.QUERY_ERROR_GENERIC);
 		} else {
 			
-			if (!songExists(songId)) {
+			if (songExists(songId)) {
 				return new DbQueryStatus("SONG DNE", DbQueryExecResult.QUERY_ERROR_GENERIC);
 			}
 			
