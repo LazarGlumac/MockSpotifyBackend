@@ -116,7 +116,27 @@ public class SongController {
 
 		Song songToAdd =  new Song(songName, songArtistFullName, songAlbum);
 		DbQueryStatus statusResult = this.songDal.addSong(songToAdd);
+		
+		if (statusResult.getdbQueryExecResult() == 	DbQueryExecResult.QUERY_OK) {
+			
+			String songID = ((Map<String, String>) (statusResult.getData())).get("_id");
+			
+			String path = String.format("http://localhost:3002/addSong/%s", songID);
 
+			Request okRequest = new Request.Builder().url(path).method("PUT", null).build();
+
+			Call call = client.newCall(okRequest);
+
+			Response responseFromPMS = null;
+
+			try {
+				responseFromPMS = call.execute();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+
+		}
+		
 		response = Utils.setResponseStatus(response, statusResult.getdbQueryExecResult(), statusResult.getData());
 
 		return response;
