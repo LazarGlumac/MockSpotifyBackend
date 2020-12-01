@@ -17,6 +17,7 @@ import okhttp3.Call;
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.RequestBody;
 import okhttp3.Response;
 
 import java.io.IOException;
@@ -83,7 +84,7 @@ public class SongController {
 			
 			String path = String.format("http://localhost:3002/deleteAllSongsFromDb/%s", songId);
 
-			Request okRequest = new Request.Builder().url(path).method("PUT", null).build();
+			Request okRequest = new Request.Builder().url(path).method("PUT", RequestBody.create(new byte[0], null)).build();
 
 			Call call = client.newCall(okRequest);
 
@@ -123,7 +124,7 @@ public class SongController {
 			
 			String path = String.format("http://localhost:3002/addSong/%s", songID);
 
-			Request okRequest = new Request.Builder().url(path).method("PUT", null).build();
+			Request okRequest = new Request.Builder().url(path).method("PUT", RequestBody.create(new byte[0], null)).build();
 
 			Call call = client.newCall(okRequest);
 
