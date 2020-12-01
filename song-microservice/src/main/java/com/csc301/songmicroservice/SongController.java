@@ -79,7 +79,8 @@ public class SongController {
 
 		DbQueryStatus dbQueryStatus = songDal.deleteSongById(songId);
 
-		if (response.get("status") == "OK") {
+		if (dbQueryStatus.getdbQueryExecResult() == DbQueryExecResult.QUERY_OK) {
+			
 			String path = String.format("http://localhost:3002/deleteAllSongsFromDb/%s", songId);
 
 			Request okRequest = new Request.Builder().url(path).method("PUT", null).build();
@@ -92,7 +93,6 @@ public class SongController {
 				responseFromPMS = call.execute();
 			} catch (IOException e) {
 				e.printStackTrace();
-				dbQueryStatus = new DbQueryStatus("PROFILE MICROSERVICE NOT STARTED", DbQueryExecResult.QUERY_ERROR_GENERIC);
 			}
 
 		}
@@ -119,7 +119,7 @@ public class SongController {
 		
 		if (statusResult.getdbQueryExecResult() == 	DbQueryExecResult.QUERY_OK) {
 			
-			String songID = ((Map<String, String>) (statusResult.getData())).get("_id");
+			String songID = ((Map<String, String>) (statusResult.getData())).get("id");
 			
 			String path = String.format("http://localhost:3002/addSong/%s", songID);
 
