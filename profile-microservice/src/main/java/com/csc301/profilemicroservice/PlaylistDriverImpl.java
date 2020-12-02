@@ -37,14 +37,14 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 
 		boolean goodConnection = true;
 
-		if (songId == null) {
+		if (songId.isEmpty()) {
 			queryStatus = new DbQueryStatus("MISSING BODY PARAMETER", DbQueryExecResult.QUERY_ERROR_GENERIC);
 		} else {
-			
+
 			if (songExists(songId)) {
 				return new DbQueryStatus("SONG DNE", DbQueryExecResult.QUERY_ERROR_GENERIC);
 			}
-			
+
 			try (Session session = ProfileMicroserviceApplication.driver.session()) {
 				try (Transaction trans = session.beginTransaction()) {
 					Map<String, Object> params = new HashMap<String, Object>();
@@ -82,14 +82,14 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 		boolean goodConnection = true;
 		boolean alreadyLiked = false;
 
-		if (userName == null || songId == null) {
+		if (userName.isEmpty() || songId.isEmpty()) {
 			queryStatus = new DbQueryStatus("MISSING BODY PARAMETER", DbQueryExecResult.QUERY_ERROR_GENERIC);
 		} else {
-			
+
 			if (!songExists(songId) || !userExists(userName)) {
 				return new DbQueryStatus("SONG OR USER DNE", DbQueryExecResult.QUERY_ERROR_GENERIC);
 			}
-			
+
 			try (Session session = ProfileMicroserviceApplication.driver.session()) {
 				try (Transaction trans = session.beginTransaction()) {
 					Map<String, Object> params = new HashMap<String, Object>();
@@ -100,17 +100,17 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 
 					if (result.hasNext()) {
 						params.put("playlistName", userName + "-favorites");
-						
+
 						queryStr = "RETURN EXISTS ((:playlist {plName: $playlistName})-[:includes]->(:song {songId: $songId}))";
-						result  = trans.run(queryStr, params);
-						
+						result = trans.run(queryStr, params);
+
 						if (result.next().get(0).toString().equals("FALSE")) {
 							queryStr = "MATCH (pl:playlist), (s:song) WHERE pl.plName = $playlistName AND s.songId = $songId MERGE (pl)-[:includes]->(s)";
 							trans.run(queryStr, params);
 						} else {
 							alreadyLiked = true;
 						}
-						
+
 					}
 
 					trans.success();
@@ -129,8 +129,7 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 				} else {
 					queryStatus = new DbQueryStatus("ALREADY LIKED", DbQueryExecResult.QUERY_OK);
 				}
-				
-				
+
 			} else {
 				queryStatus = new DbQueryStatus("FAILED TO CONNECT TO NEO4J", DbQueryExecResult.QUERY_ERROR_GENERIC);
 			}
@@ -147,14 +146,14 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 		boolean goodConnection = true;
 		boolean hasBeenLiked = false;
 
-		if (userName == null || songId == null) {
+		if (userName.isEmpty() || songId.isEmpty()) {
 			queryStatus = new DbQueryStatus("MISSING BODY PARAMETER", DbQueryExecResult.QUERY_ERROR_GENERIC);
 		} else {
-			
+
 			if (!songExists(songId) || !userExists(userName)) {
 				return new DbQueryStatus("SONG OR USER DNE", DbQueryExecResult.QUERY_ERROR_GENERIC);
 			}
-			
+
 			try (Session session = ProfileMicroserviceApplication.driver.session()) {
 				try (Transaction trans = session.beginTransaction()) {
 					Map<String, Object> params = new HashMap<String, Object>();
@@ -162,8 +161,8 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 					params.put("playlistName", userName + "-favorites");
 
 					String queryStr = "RETURN EXISTS ((:playlist {plName: $playlistName})-[:includes]->(:song {songId: $songId}))";
-					StatementResult result  = trans.run(queryStr, params);
-					
+					StatementResult result = trans.run(queryStr, params);
+
 					if (result.next().get(0).toString().equals("TRUE")) {
 						queryStr = "MATCH (:playlist {plName: $playlistName})-[i:includes]->(:song {songId: $songId}) DELETE i";
 						trans.run(queryStr, params);
@@ -179,14 +178,15 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 			} catch (Exception e) {
 				goodConnection = false;
 			}
-			
+
 			if (goodConnection) {
 				if (hasBeenLiked) {
 					queryStatus = new DbQueryStatus("OK", DbQueryExecResult.QUERY_OK);
 				} else {
-					queryStatus = new DbQueryStatus("SONG NOT IN USER'S FAVORITES", DbQueryExecResult.QUERY_ERROR_GENERIC);
+					queryStatus = new DbQueryStatus("SONG NOT IN USER'S FAVORITES",
+							DbQueryExecResult.QUERY_ERROR_GENERIC);
 				}
-				
+
 			} else {
 				queryStatus = new DbQueryStatus("FAILED TO CONNECT TO NEO4J", DbQueryExecResult.QUERY_ERROR_GENERIC);
 			}
@@ -202,14 +202,14 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 
 		boolean goodConnection = true;
 
-		if (songId == null) {
+		if (songId.isEmpty()) {
 			queryStatus = new DbQueryStatus("MISSING BODY PARAMETER", DbQueryExecResult.QUERY_ERROR_GENERIC);
 		} else {
-			
+
 			if (!songExists(songId)) {
 				return new DbQueryStatus("SONG DNE", DbQueryExecResult.QUERY_ERROR_GENERIC);
 			}
-			
+
 			try (Session session = ProfileMicroserviceApplication.driver.session()) {
 				try (Transaction trans = session.beginTransaction()) {
 					Map<String, Object> params = new HashMap<String, Object>();
@@ -237,18 +237,18 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 
 		return queryStatus;
 	}
-	
+
 	public boolean userExists(String username) {
 		boolean exists = false;
-		
+
 		try (Session session = ProfileMicroserviceApplication.driver.session()) {
 			try (Transaction trans = session.beginTransaction()) {
 				Map<String, Object> params = new HashMap<String, Object>();
 				params.put("username", username);
 
 				String queryStr = "MATCH (p:profile) WHERE p.userName = $username return p";
-				StatementResult result  = trans.run(queryStr, params);
-				
+				StatementResult result = trans.run(queryStr, params);
+
 				if (result.hasNext()) {
 					exists = true;
 				}
@@ -260,21 +260,21 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 			session.close();
 		} catch (Exception e) {
 		}
-		
+
 		return exists;
 	}
-	
+
 	public boolean songExists(String songId) {
 		boolean exists = false;
-		
+
 		try (Session session = ProfileMicroserviceApplication.driver.session()) {
 			try (Transaction trans = session.beginTransaction()) {
 				Map<String, Object> params = new HashMap<String, Object>();
 				params.put("songId", songId);
 
 				String queryStr = "MATCH (s:song) WHERE s.songId = $songId return s";
-				StatementResult result  = trans.run(queryStr, params);
-				
+				StatementResult result = trans.run(queryStr, params);
+
 				if (result.hasNext()) {
 					exists = true;
 				}
@@ -286,7 +286,7 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 			session.close();
 		} catch (Exception e) {
 		}
-		
+
 		return exists;
 	}
 }

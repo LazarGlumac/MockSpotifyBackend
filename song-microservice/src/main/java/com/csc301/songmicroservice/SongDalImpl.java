@@ -25,13 +25,13 @@ public class SongDalImpl implements SongDal {
 	@Override
 	public DbQueryStatus addSong(Song songToAdd) {
 
-		boolean checkNull = songToAdd.getSongName() == null || songToAdd.getSongAlbum() == null || songToAdd.getSongArtistFullName() == null;
+		boolean checkNull = songToAdd.getSongName().isEmpty() || songToAdd.getSongAlbum().isEmpty()
+				|| songToAdd.getSongArtistFullName().isEmpty();
 		DbQueryStatus toReturn;
 
 		if (checkNull) {
 			toReturn = new DbQueryStatus("MISSING BODY PARAMETER", DbQueryExecResult.QUERY_ERROR_GENERIC);
-		}
-		else {
+		} else {
 
 			this.db.insert(songToAdd);
 			toReturn = new DbQueryStatus("OK", DbQueryExecResult.QUERY_OK);
@@ -45,13 +45,12 @@ public class SongDalImpl implements SongDal {
 	@Override
 	public DbQueryStatus findSongById(String songId) {
 
-		boolean checkNull = songId == null;
+		boolean checkNull = songId.isEmpty();
 		DbQueryStatus toReturn;
 
 		if (checkNull) {
 			toReturn = new DbQueryStatus("MISSING BODY PARAMETER", DbQueryExecResult.QUERY_ERROR_GENERIC);
-		} 
-		else {
+		} else {
 
 			Query query = new Query();
 			query.addCriteria(Criteria.where("_id").is(songId));
@@ -60,8 +59,7 @@ public class SongDalImpl implements SongDal {
 
 			if (songToFind.size() == 0) {
 				toReturn = new DbQueryStatus("NOT_FOUND", DbQueryExecResult.QUERY_ERROR_NOT_FOUND);
-			}
-			else {
+			} else {
 				toReturn = new DbQueryStatus("OK", DbQueryExecResult.QUERY_OK);
 				toReturn.setData(songToFind.get(0).getJsonRepresentation());
 			}
@@ -79,8 +77,7 @@ public class SongDalImpl implements SongDal {
 
 		if (!(songFromID.getMessage().equals("OK"))) {
 			toReturn = new DbQueryStatus(songFromID.getMessage(), songFromID.getdbQueryExecResult());
-		}
-		else {
+		} else {
 
 			toReturn = new DbQueryStatus("OK", DbQueryExecResult.QUERY_OK);
 			toReturn.setData(((Map<String, String>) songFromID.getData()).get("songName"));
@@ -92,28 +89,26 @@ public class SongDalImpl implements SongDal {
 
 	@Override
 	public DbQueryStatus deleteSongById(String songId) {
-		
-		boolean checkNull = songId == null;
+
+		boolean checkNull = songId.isEmpty();
 		DbQueryStatus toReturn;
 
 		if (checkNull) {
 			toReturn = new DbQueryStatus("MISSING BODY PARAMETER", DbQueryExecResult.QUERY_ERROR_GENERIC);
-		} 
-		else {
+		} else {
 			Query query = new Query();
 			query.addCriteria(Criteria.where("_id").is(songId));
-			
+
 			long deletedResult = this.db.remove(query, Song.class).getDeletedCount();
-			
+
 			if (deletedResult == 0) {
 				toReturn = new DbQueryStatus("NOT_FOUND", DbQueryExecResult.QUERY_ERROR_NOT_FOUND);
-			}
-			else {
+			} else {
 				toReturn = new DbQueryStatus("OK", DbQueryExecResult.QUERY_OK);
 			}
-			
+
 		}
-		
+
 		return toReturn;
 	}
 
@@ -125,14 +120,14 @@ public class SongDalImpl implements SongDal {
 
 		if (!(songFromID.getMessage().equals("OK"))) {
 			toReturn = new DbQueryStatus(songFromID.getMessage(), songFromID.getdbQueryExecResult());
-		}
-		else {
+		} else {
 
 			toReturn = new DbQueryStatus("OK", DbQueryExecResult.QUERY_OK);
 
 			HashMap<String, String> mapFromQuery = (HashMap<String, String>) songFromID.getData();
 
-			Song songFromQuery = new Song(mapFromQuery.get("songName"), mapFromQuery.get("songArtistFullName"), mapFromQuery.get("songAlbum"));
+			Song songFromQuery = new Song(mapFromQuery.get("songName"), mapFromQuery.get("songArtistFullName"),
+					mapFromQuery.get("songAlbum"));
 			songFromQuery.setSongAmountFavourites(Long.valueOf(mapFromQuery.get("songAmountFavourites")));
 			songFromQuery.setId(new ObjectId(mapFromQuery.get("id")));
 
@@ -140,25 +135,22 @@ public class SongDalImpl implements SongDal {
 
 			if (shouldDecrement) {
 				change = -1;
-			}
-			else {
+			} else {
 				change = 1;
 			}
-			
+
 			if (songFromQuery.getSongAmountFavourites() + change < 0) {
 				toReturn = new DbQueryStatus("INVALID_OPERATION", DbQueryExecResult.QUERY_ERROR_GENERIC);
-			}
-			else {
+			} else {
 				songFromQuery.setSongAmountFavourites(songFromQuery.getSongAmountFavourites() + change);
 				this.db.save(songFromQuery);
 
 				toReturn = new DbQueryStatus("OK", DbQueryExecResult.QUERY_OK);
 			}
-			
 
 		}
 
 		return toReturn;
 	}
-	
+
 }

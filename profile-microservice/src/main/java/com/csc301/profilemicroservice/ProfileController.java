@@ -141,6 +141,8 @@ public class ProfileController {
 					}
 
 					friendsFavoriteSongTitles.put(friendName.getKey().toString(), songTitles);
+				} else {
+					friendsFavoriteSongTitles.put(friendName.getKey().toString(), new String [0]);
 				}
 			}
 
