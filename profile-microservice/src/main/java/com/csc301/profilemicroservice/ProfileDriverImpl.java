@@ -47,7 +47,7 @@ public class ProfileDriverImpl implements ProfileDriver {
 
 		boolean goodConnection = true;
 
-		if (userName == null || fullName == null || password == null) {
+		if (userName.isEmpty() || fullName.isEmpty() || password.isEmpty()) {
 			queryStatus = new DbQueryStatus("MISSING BODY PARAMETER", DbQueryExecResult.QUERY_ERROR_GENERIC);
 		} else {
 			boolean alreadyExists = false;
@@ -110,14 +110,18 @@ public class ProfileDriverImpl implements ProfileDriver {
 		boolean goodConnection = true;
 		boolean alreadyFollows = true;
 
-		if (userName == null || frndUserName == null) {
+		if (userName.isEmpty() || frndUserName.isEmpty()) {
 			queryStatus = new DbQueryStatus("MISSING BODY PARAMETER", DbQueryExecResult.QUERY_ERROR_GENERIC);
 		} else {
-			
+
 			if (!userExists(userName) || !userExists(frndUserName)) {
 				return new DbQueryStatus("ONE OR MORE USERS NON-EXISTENT", DbQueryExecResult.QUERY_ERROR_GENERIC);
 			}
-			
+
+			if (userName.equals(frndUserName)) {
+				return new DbQueryStatus("CAN'T ADD YOURSELF", DbQueryExecResult.QUERY_ERROR_GENERIC);
+			}
+
 			try (Session session = ProfileMicroserviceApplication.driver.session()) {
 				try (Transaction trans = session.beginTransaction()) {
 					Map<String, Object> params = new HashMap<String, Object>();
@@ -125,9 +129,9 @@ public class ProfileDriverImpl implements ProfileDriver {
 					params.put("friendUsername", frndUserName);
 
 					String queryStr = "RETURN EXISTS ((:profile {userName: $username})-[:follows]->(:profile {userName: $friendUsername}))";
-					StatementResult result  = trans.run(queryStr, params);
-										
-					if (result.next().get(0).toString().equals("FALSE")) {						
+					StatementResult result = trans.run(queryStr, params);
+
+					if (result.next().get(0).toString().equals("FALSE")) {
 						queryStr = "MATCH (p1:profile), (p2:profile) WHERE p1.userName = $username AND p2.userName = $friendUsername MERGE (p1)-[:follows]->(p2)";
 						trans.run(queryStr, params);
 						alreadyFollows = false;
@@ -149,7 +153,7 @@ public class ProfileDriverImpl implements ProfileDriver {
 				} else {
 					queryStatus = new DbQueryStatus("ALREADY FOLLOWING", DbQueryExecResult.QUERY_ERROR_GENERIC);
 				}
-				
+
 			} else {
 				queryStatus = new DbQueryStatus("FAILED TO CONNECT TO NEO4J", DbQueryExecResult.QUERY_ERROR_GENERIC);
 			}
@@ -165,15 +169,14 @@ public class ProfileDriverImpl implements ProfileDriver {
 		boolean goodConnection = true;
 		boolean alreadyFollows = false;
 
-		if (userName == null || frndUserName == null) {
+		if (userName.isEmpty() || frndUserName.isEmpty()) {
 			queryStatus = new DbQueryStatus("MISSING BODY PARAMETER", DbQueryExecResult.QUERY_ERROR_GENERIC);
 		} else {
-			
+
 			if (!userExists(userName) || !userExists(frndUserName)) {
 				return new DbQueryStatus("ONE OR MORE USERS NON-EXISTENT", DbQueryExecResult.QUERY_ERROR_GENERIC);
 			}
-			
-			
+
 			try (Session session = ProfileMicroserviceApplication.driver.session()) {
 				try (Transaction trans = session.beginTransaction()) {
 					Map<String, Object> params = new HashMap<String, Object>();
@@ -181,8 +184,8 @@ public class ProfileDriverImpl implements ProfileDriver {
 					params.put("friendUsername", frndUserName);
 
 					String queryStr = "RETURN EXISTS ((:profile {userName: $username})-[:follows]->(:profile {userName: $friendUsername}))";
-					StatementResult result  = trans.run(queryStr, params);
-					
+					StatementResult result = trans.run(queryStr, params);
+
 					if (result.next().get(0).toString().equals("TRUE")) {
 						queryStr = "MATCH (:profile {userName: $username})-[f:follows]->(:profile {userName: $friendUsername}) DELETE f";
 						trans.run(queryStr, params);
@@ -205,7 +208,7 @@ public class ProfileDriverImpl implements ProfileDriver {
 				} else {
 					queryStatus = new DbQueryStatus("NOT EVEN FOLLOWING USER", DbQueryExecResult.QUERY_ERROR_GENERIC);
 				}
-				
+
 			} else {
 				queryStatus = new DbQueryStatus("FAILED TO CONNECT TO NEO4J", DbQueryExecResult.QUERY_ERROR_GENERIC);
 			}
@@ -221,13 +224,13 @@ public class ProfileDriverImpl implements ProfileDriver {
 
 		boolean goodConnection = true;
 
-		if (userName == null) {
+		if (userName.isEmpty()) {
 			queryStatus = new DbQueryStatus("MISSING BODY PARAMETER", DbQueryExecResult.QUERY_ERROR_GENERIC);
 		} else {
 			if (!userExists(userName)) {
 				return new DbQueryStatus("USER NON-EXISTENT", DbQueryExecResult.QUERY_ERROR_GENERIC);
 			}
-			
+
 			JSONObject allSongsFriendsLike = new JSONObject();
 
 			try (Session session = ProfileMicroserviceApplication.driver.session()) {
@@ -284,18 +287,18 @@ public class ProfileDriverImpl implements ProfileDriver {
 
 		return queryStatus;
 	}
-	
+
 	public boolean userExists(String username) {
 		boolean exists = false;
-		
+
 		try (Session session = ProfileMicroserviceApplication.driver.session()) {
 			try (Transaction trans = session.beginTransaction()) {
 				Map<String, Object> params = new HashMap<String, Object>();
 				params.put("username", username);
 
 				String queryStr = "MATCH (p:profile) WHERE p.userName = $username return p";
-				StatementResult result  = trans.run(queryStr, params);
-				
+				StatementResult result = trans.run(queryStr, params);
+
 				if (result.hasNext()) {
 					exists = true;
 				}
@@ -307,7 +310,7 @@ public class ProfileDriverImpl implements ProfileDriver {
 			session.close();
 		} catch (Exception e) {
 		}
-		
+
 		return exists;
 	}
 }
