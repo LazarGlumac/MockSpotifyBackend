@@ -1,7 +1,6 @@
 package com.csc301.profilemicroservice;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -9,7 +8,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.csc301.profilemicroservice.Utils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import okhttp3.Call;
@@ -19,15 +17,12 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-
-import org.json.*;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -53,6 +48,14 @@ public class ProfileController {
 		this.playlistDriver = playlistDriver;
 	}
 
+	/**
+	 * Controls and handles the route for /profile (POST), adding the new profile to the Neo4j database
+	 * 
+	 * @param params a map of the query parameters required for this route (userName: the username of the new user, fullName:
+	 * the full name of the new user, and password: the user's password)
+	 * @param request the HttpServlet representing from where the request was sent
+	 * @return the response body for the request, which contains the status and path of the request
+	 */
 	@RequestMapping(value = "/profile", method = RequestMethod.POST)
 	public @ResponseBody Map<String, Object> addProfile(@RequestParam Map<String, String> params,
 			HttpServletRequest request) {
@@ -68,6 +71,15 @@ public class ProfileController {
 		return response;
 	}
 
+	/**
+	 * Controls and handles the route for /followFriend/{userName}/{friendUserName} (PUT), adding a "follows" relationship
+	 * from the given user to its friend in the Neo4j database
+	 * 
+	 * @param userName the userName property of the user in the Neo4j database
+	 * @param friendUserName the userName property of the user's friend in the Neo4j database
+	 * @param request the HttpServlet representing from where the request was sent
+	 * @return the response body for the request, which contains the status and path of the request
+	 */
 	@RequestMapping(value = "/followFriend/{userName}/{friendUserName}", method = RequestMethod.PUT)
 	public @ResponseBody Map<String, Object> followFriend(@PathVariable(KEY_USER_NAME) String userName,
 			@PathVariable(KEY_FRIEND_USERNAME) String friendUserName, HttpServletRequest request) {
@@ -82,6 +94,14 @@ public class ProfileController {
 		return response;
 	}
 
+	/**
+	 * Controls and handles the route for /getAllFriendFavouriteSongTitles/{userName} (GET)
+	 * 
+	 * @param userName the userName property of the user in the Neo4j database
+	 * @param request the HttpServlet representing from where the request was sent
+	 * @return the response body for the request, which contains the status, path, and data (a map of the user's friends and their
+	 * liked songs) of the request
+	 */
 	@RequestMapping(value = "/getAllFriendFavouriteSongTitles/{userName}", method = RequestMethod.GET)
 	public @ResponseBody Map<String, Object> getAllFriendFavouriteSongTitles(
 			@PathVariable(KEY_USER_NAME) String userName, HttpServletRequest request) {
@@ -184,6 +204,15 @@ public class ProfileController {
 		return response;
 	}
 
+	/**
+	 * Controls and handles the route for /unfollowFriend/{userName}/{friendUserName} (PUT), removing the "follows" relationship
+	 * from the given user to its friend in the Neo4j database
+	 * 
+	 * @param userName the userName property of the user in the Neo4j database
+	 * @param friendUserName the userName property of the user's friend in the Neo4j database
+	 * @param request the HttpServlet representing from where the request was sent
+	 * @return the response body for the request, which contains the status and path of the request
+	 */
 	@RequestMapping(value = "/unfollowFriend/{userName}/{friendUserName}", method = RequestMethod.PUT)
 	public @ResponseBody Map<String, Object> unfollowFriend(@PathVariable(KEY_USER_NAME) String userName,
 			@PathVariable(KEY_FRIEND_USERNAME) String friendUserName, HttpServletRequest request) {
@@ -198,6 +227,14 @@ public class ProfileController {
 		return response;
 	}
 
+	
+	/**
+	 * Controls and handles the route for /addSong/{songId} (PUT), adding a song node to the Neo4j database
+	 * 
+	 * @param songId the songId property of the new song node
+	 * @param request the HttpServlet representing from where the request was sent
+	 * @return the response body for the request, which contains the status and path of the request
+	 */
 	@RequestMapping(value = "/addSong/{songId}", method = RequestMethod.PUT)
 	public @ResponseBody Map<String, Object> addSong(@PathVariable(KEY_SONGID) String songId,
 			HttpServletRequest request) {
@@ -212,6 +249,15 @@ public class ProfileController {
 		return response;
 	}
 
+	/**
+	 * Controls and handles the route for /likeSong/{userName}/{songId} (PUT), adding an "includes" relationship from the 
+	 * user's playlist to the given song in Neo4j
+	 * 
+	 * @param userName the userName property of the user in the Neo4j database
+	 * @param songId the songId property of the song in the Neo4j database
+	 * @param request the HttpServlet representing from where the request was sent
+	 * @return the response body for the request, which contains the status and path of the request
+	 */
 	@RequestMapping(value = "/likeSong/{userName}/{songId}", method = RequestMethod.PUT)
 	public @ResponseBody Map<String, Object> likeSong(@PathVariable(KEY_USER_NAME) String userName,
 			@PathVariable(KEY_SONGID) String songId, HttpServletRequest request) {
@@ -258,6 +304,16 @@ public class ProfileController {
 		return response;
 	}
 
+	
+	/**
+	 * Controls and handles the route for /unlikeSong/{userName}/{songId} (PUT), removing the "includes" relationship from the 
+	 * user's playlist to the given song in Neo4j
+	 * 
+	 * @param userName the userName property of the user in the Neo4j database
+	 * @param songId the songId property of the song in the Neo4j database
+	 * @param request the HttpServlet representing from where the request was sent
+	 * @return the response body for the request, which contains the status and path of the request
+	 */
 	@RequestMapping(value = "/unlikeSong/{userName}/{songId}", method = RequestMethod.PUT)
 	public @ResponseBody Map<String, Object> unlikeSong(@PathVariable(KEY_USER_NAME) String userName,
 			@PathVariable(KEY_SONGID) String songId, HttpServletRequest request) {
@@ -304,6 +360,14 @@ public class ProfileController {
 		return response;
 	}
 
+	/**
+	 * Controls and handles the route for /deleteAllSongsFromDb/{songId} (PUT), removing the given song node and all its 
+	 * relationships in the Neo4j database
+	 * 
+	 * @param songId the songId property of the song in the Neo4j database
+	 * @param request the HttpServlet representing from where the request was sent
+	 * @return the response body for the request, which contains the status and path of the request
+	 */
 	@RequestMapping(value = "/deleteAllSongsFromDb/{songId}", method = RequestMethod.PUT)
 	public @ResponseBody Map<String, Object> deleteAllSongsFromDb(@PathVariable(KEY_SONGID) String songId,
 			HttpServletRequest request) {
