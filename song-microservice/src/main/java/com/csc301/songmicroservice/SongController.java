@@ -1,20 +1,13 @@
 package com.csc301.songmicroservice;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import okhttp3.Call;
-import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
@@ -39,7 +32,14 @@ public class SongController {
 		this.songDal = songDal;
 	}
 
-
+	/**
+	 * Controls and handles the route for /getSongById/{songId} (GET), and returns the title, artist name,
+	 * album name, and number of favourites for the song.
+	 * 
+	 * @param songId the ObjectID of the song in the MongoDB
+	 * @param request the HttpServlet representing from where the request was sent
+	 * @return the response body for the request, with status and data keys
+	 */
 	@RequestMapping(value = "/getSongById/{songId}", method = RequestMethod.GET)
 	public @ResponseBody Map<String, Object> getSongById(@PathVariable("songId") String songId,
 			HttpServletRequest request) {
@@ -49,13 +49,19 @@ public class SongController {
 
 		DbQueryStatus dbQueryStatus = songDal.findSongById(songId);
 
-		// 		response.put("message", dbQueryStatus.getMessage());
 		response = Utils.setResponseStatus(response, dbQueryStatus.getdbQueryExecResult(), dbQueryStatus.getData());
 
 		return response;
 	}
 
-
+	/**
+	 * Controls and handles the route for /getSongTitleById/{songId} (GET), and returns the title of the
+	 * song with the given ID.
+	 * 
+	 * @param songId the ObjectID of the song in the MongoDB
+	 * @param request the HttpServlet representing from where the request was sent
+	 * @return the response body for the request, with status and data keys
+	 */
 	@RequestMapping(value = "/getSongTitleById/{songId}", method = RequestMethod.GET)
 	public @ResponseBody Map<String, Object> getSongTitleById(@PathVariable("songId") String songId,
 			HttpServletRequest request) {
@@ -70,7 +76,14 @@ public class SongController {
 		return response;
 	}
 
-
+	/**
+	 * Controls and handles the route for /deleteSongById/{songId} (DELETE), deleting the song from all databases
+	 * and playlists in which it appeared.
+	 * 
+	 * @param songId the ObjectID of the song in the MongoDB
+	 * @param request the HttpServlet representing from where the request was sent
+	 * @return the response body for the request, with status and data keys
+	 */
 	@RequestMapping(value = "/deleteSongById/{songId}", method = RequestMethod.DELETE)
 	public @ResponseBody Map<String, Object> deleteSongById(@PathVariable("songId") String songId,
 			HttpServletRequest request) {
@@ -103,7 +116,14 @@ public class SongController {
 		return response;
 	}
 
-
+	/**
+	 * Controls and handles the route for /addSong (POST), adding the song to the MongoDB, and sending
+	 * a request to add it to the Neo4jDB as well.
+	 * 
+	 * @param songId the ObjectID of the song in the MongoDB
+	 * @param request the HttpServlet representing from where the request was sent
+	 * @return the response body for the request, with status and data keys
+	 */
 	@RequestMapping(value = "/addSong", method = RequestMethod.POST)
 	public @ResponseBody Map<String, Object> addSong(@RequestParam Map<String, String> params,
 			HttpServletRequest request) {
@@ -144,7 +164,15 @@ public class SongController {
 
 	}
 
-
+	/**
+	 * This method controls and handles the route for /updateSongFavouritesCount/{songId} (PUT), updating the favourite count
+	 * of the given song given the shouldDecrement value
+	 * 
+	 * @param songId the ObjectID of the song in the MongoDB
+	 * @param shouldDecrement the boolean value representing whether the favourite count should be incremented or decremented
+	 * @param request the HttpServlet representing from where the request was sent
+	 * @return
+	 */
 	@RequestMapping(value = "/updateSongFavouritesCount/{songId}", method = RequestMethod.PUT)
 	public @ResponseBody Map<String, Object> updateFavouritesCount(@PathVariable("songId") String songId,
 			@RequestParam("shouldDecrement") String shouldDecrement, HttpServletRequest request) {

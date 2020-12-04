@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.bson.types.ObjectId;
-import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -21,7 +20,13 @@ public class SongDalImpl implements SongDal {
 	public SongDalImpl(MongoTemplate mongoTemplate) {
 		this.db = mongoTemplate;
 	}
-
+	
+	/**
+	 * Handles inserting a Song object into the MongoDB, checking whether all parameters are non-empty.
+	 * 
+	 * @param songToAdd the song to be inserted
+	 * @return the DbQueryStatus of the operation performed (OK for success, non OK o/w)
+	 */
 	@Override
 	public DbQueryStatus addSong(Song songToAdd) {
 
@@ -42,6 +47,12 @@ public class SongDalImpl implements SongDal {
 		return toReturn;
 	}
 
+	/**
+	 * Handles finding a Song object in the MongoDB given its ObjectID.
+	 * 
+	 * @param songId the ObjectID of the song in the database
+	 * @return the DbQueryStatus of the operation performed (OK for success, non OK o/w), containing all properties of the song
+	 */
 	@Override
 	public DbQueryStatus findSongById(String songId) {
 
@@ -68,7 +79,13 @@ public class SongDalImpl implements SongDal {
 
 		return toReturn;
 	}
-
+	
+	/**
+	 * Handles finding a Song object's title in the MongoDB given its ObjectID.
+	 * 
+	 * @param songId the ObjectID of the song in the database
+	 * @return the DbQueryStatus of the operation performed (OK for success, non OK o/w), containing the title of the song
+	 */
 	@Override
 	public DbQueryStatus getSongTitleById(String songId) {
 
@@ -86,7 +103,13 @@ public class SongDalImpl implements SongDal {
 
 		return toReturn;
 	}
-
+	
+	/**
+	 * Handles deleting a song from the MongoDB given its ObjectID.
+	 * 
+	 * @param songId the ObjectID of the song in the database
+	 * @return the DbQueryStatus of the operation performed (OK for success, non OK o/w)
+	 */
 	@Override
 	public DbQueryStatus deleteSongById(String songId) {
 
@@ -111,7 +134,14 @@ public class SongDalImpl implements SongDal {
 
 		return toReturn;
 	}
-
+	
+	/**
+	 * Handles incrementing/decrementing the favourites count of a song in the MongoDB.
+	 * 
+	 * @param songId the ObjectID of the song in the database
+	 * @param shouldDecrement the boolean value of whether the count should be incremented or decremented
+	 * @return the DbQueryStatus of the operation performed (OK for success, non OK o/w)
+	 */
 	@Override
 	public DbQueryStatus updateSongFavouritesCount(String songId, boolean shouldDecrement) {
 
