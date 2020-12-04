@@ -14,6 +14,10 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 
 	Driver driver = ProfileMicroserviceApplication.driver;
 
+	/**
+	 *Initializes the Neo4j database by creating constraints (ensuring that the specified property will exist for a node) for the
+	 *playlist and song node. Namely, plName (for the playlist node) and songId (for the song node).
+	 */
 	public static void InitPlaylistDb() {
 		String queryStr;
 

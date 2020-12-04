@@ -20,6 +20,10 @@ public class ProfileDriverImpl implements ProfileDriver {
 
 	Driver driver = ProfileMicroserviceApplication.driver;
 
+	/**
+	 *Initializes the Neo4j database by creating constraints (ensuring that the specified property will exist for a node) for the
+	 *profile node. Namely, the userName and password property, where userName is unique.
+	 */
 	public static void InitProfileDb() {
 		String queryStr;
 
@@ -40,6 +44,14 @@ public class ProfileDriverImpl implements ProfileDriver {
 		}
 	}
 
+	/**
+	 * Creates a profile node in the Neo4j database
+	 * 
+	 * @param userName the userName property of the new profile node in the Neo4j database
+	 * @param fullName the fullName property of the new profile node in the Neo4j database
+	 * @param password the password property of the new profile node in the Neo4j database
+	 * @return the DbQueryStatus of the operation performed (OK for success, non OK o/w)
+	 */
 	@Override
 	public DbQueryStatus createUserProfile(String userName, String fullName, String password) {
 
@@ -112,6 +124,13 @@ public class ProfileDriverImpl implements ProfileDriver {
 		return queryStatus;
 	}
 
+	/**
+	 * Creates a direct relationship from the given user to its friend, labeled, "follows", in the Neo4j database
+	 * 
+	 * @param userName the userName property of the user in the Neo4j database
+	 * @param frndUserName the userName property of the user's friend in the Neo4j database
+	 * @return the DbQueryStatus of the operation performed (OK for success, non OK o/w)
+	 */
 	@Override
 	public DbQueryStatus followFriend(String userName, String frndUserName) {
 		DbQueryStatus queryStatus;
@@ -181,6 +200,13 @@ public class ProfileDriverImpl implements ProfileDriver {
 		return queryStatus;
 	}
 
+	/**
+	 * Removes the direct relationship from the given user to its friend, labeled, "follows", in the Neo4j database
+	 * 
+	 * @param userName the userName property of the user in the Neo4j database
+	 * @param frndUserName the userName property of the user's friend in the Neo4j database
+	 * @return the DbQueryStatus of the operation performed (OK for success, non OK o/w)
+	 */
 	@Override
 	public DbQueryStatus unfollowFriend(String userName, String frndUserName) {
 		DbQueryStatus queryStatus;
@@ -245,6 +271,13 @@ public class ProfileDriverImpl implements ProfileDriver {
 		return queryStatus;
 	}
 
+	/**
+	 * Finds all the liked songs for each of the given user's friends
+	 * 
+	 * @param userName the userName property of the user in the Neo4j database
+	 * @return the DbQueryStatus of the operation performed (OK for success, non OK o/w), containing a map of each of the user's friends'
+	 * liked songs and the songs they've liked
+	 */
 	@Override
 	public DbQueryStatus getAllSongFriendsLike(String userName) {
 
