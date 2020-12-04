@@ -35,12 +35,15 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 
 		DbQueryStatus queryStatus;
 
+		// Keeps track of whether the connection to Neo4j is successful
 		boolean goodConnection = true;
 
+		// Checking if the parameter is empty
 		if (songId.isEmpty()) {
 			queryStatus = new DbQueryStatus("MISSING BODY PARAMETER", DbQueryExecResult.QUERY_ERROR_GENERIC);
 		} else {
 
+			// Checking if a song node exists in Neo4j with the given songId
 			if (songExists(songId)) {
 				return new DbQueryStatus("SONG DNE", DbQueryExecResult.QUERY_ERROR_GENERIC);
 			}
@@ -50,6 +53,7 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 					Map<String, Object> params = new HashMap<String, Object>();
 					params.put("songId", songId);
 
+					// Query to create a song node in Neo4j with the given songId
 					String queryStr = "MERGE (s:song {songId: $songId})";
 					trans.run(queryStr, params);
 
@@ -79,13 +83,18 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 
 		DbQueryStatus queryStatus;
 
+		// Keeps track of whether the connection to Neo4j is successful
 		boolean goodConnection = true;
+
+		// Keeps track of whether the song has already been liked by the user
 		boolean alreadyLiked = false;
 
+		// Checking if any of the parameters are empty
 		if (userName.isEmpty() || songId.isEmpty()) {
 			queryStatus = new DbQueryStatus("MISSING BODY PARAMETER", DbQueryExecResult.QUERY_ERROR_GENERIC);
 		} else {
 
+			// Checking if the song or user exists in Neo4j
 			if (!songExists(songId) || !userExists(userName)) {
 				return new DbQueryStatus("SONG OR USER DNE", DbQueryExecResult.QUERY_ERROR_GENERIC);
 			}
@@ -94,23 +103,20 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 				try (Transaction trans = session.beginTransaction()) {
 					Map<String, Object> params = new HashMap<String, Object>();
 					params.put("songId", songId);
+					params.put("playlistName", userName + "-favorites");
 
-					String queryStr = "MATCH (s:song) WHERE s.songId = $songId RETURN s";
+					// Query to check if the user has already liked the song
+					String queryStr = "RETURN EXISTS ((:playlist {plName: $playlistName})-[:includes]->(:song {songId: $songId}))";
 					StatementResult result = trans.run(queryStr, params);
-
-					if (result.hasNext()) {
-						params.put("playlistName", userName + "-favorites");
-
-						queryStr = "RETURN EXISTS ((:playlist {plName: $playlistName})-[:includes]->(:song {songId: $songId}))";
-						result = trans.run(queryStr, params);
-
-						if (result.next().get(0).toString().equals("FALSE")) {
-							queryStr = "MATCH (pl:playlist), (s:song) WHERE pl.plName = $playlistName AND s.songId = $songId MERGE (pl)-[:includes]->(s)";
-							trans.run(queryStr, params);
-						} else {
-							alreadyLiked = true;
-						}
-
+					
+					// Checking if the user has already liked the song
+					if (result.next().get(0).toString().equals("FALSE")) {
+						
+						// Making the relationship between the user's playlist and song 
+						queryStr = "MATCH (pl:playlist), (s:song) WHERE pl.plName = $playlistName AND s.songId = $songId MERGE (pl)-[:includes]->(s)";
+						trans.run(queryStr, params);
+					} else {
+						alreadyLiked = true;
 					}
 
 					trans.success();
@@ -143,13 +149,18 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 
 		DbQueryStatus queryStatus;
 
+		// Keeps track of whether the connection to Neo4j is successful
 		boolean goodConnection = true;
+		
+		// Keeps track of whether the song has been liked by the user
 		boolean hasBeenLiked = false;
-
+		
+		// Checks if any of the parameters are empty
 		if (userName.isEmpty() || songId.isEmpty()) {
 			queryStatus = new DbQueryStatus("MISSING BODY PARAMETER", DbQueryExecResult.QUERY_ERROR_GENERIC);
 		} else {
-
+			
+			// Checking if the given songId or user exists in Neo4j
 			if (!songExists(songId) || !userExists(userName)) {
 				return new DbQueryStatus("SONG OR USER DNE", DbQueryExecResult.QUERY_ERROR_GENERIC);
 			}
@@ -159,11 +170,15 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 					Map<String, Object> params = new HashMap<String, Object>();
 					params.put("songId", songId);
 					params.put("playlistName", userName + "-favorites");
-
+					
+					
+					// Query to check if the user has liked the song before
 					String queryStr = "RETURN EXISTS ((:playlist {plName: $playlistName})-[:includes]->(:song {songId: $songId}))";
 					StatementResult result = trans.run(queryStr, params);
 
 					if (result.next().get(0).toString().equals("TRUE")) {
+						
+						// Query to remove the given song from the user's playlist
 						queryStr = "MATCH (:playlist {plName: $playlistName})-[i:includes]->(:song {songId: $songId}) DELETE i";
 						trans.run(queryStr, params);
 						hasBeenLiked = true;
@@ -200,12 +215,15 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 
 		DbQueryStatus queryStatus;
 
+		// Keeps track of whether the connection to Neo4j is successful
 		boolean goodConnection = true;
-
+		
+		// Checks if the parameter is empty
 		if (songId.isEmpty()) {
 			queryStatus = new DbQueryStatus("MISSING BODY PARAMETER", DbQueryExecResult.QUERY_ERROR_GENERIC);
 		} else {
-
+			
+			// Checks if the given song exists in Neo4j
 			if (!songExists(songId)) {
 				return new DbQueryStatus("SONG DNE", DbQueryExecResult.QUERY_ERROR_GENERIC);
 			}
@@ -214,7 +232,8 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 				try (Transaction trans = session.beginTransaction()) {
 					Map<String, Object> params = new HashMap<String, Object>();
 					params.put("songId", songId);
-
+					
+					// Query to delete the song and all its relationships from Neo4j
 					String queryStr = "MATCH (s:song) WHERE s.songId = $songId DETACH DELETE s";
 					trans.run(queryStr, params);
 
@@ -238,6 +257,12 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 		return queryStatus;
 	}
 
+	
+	/**********************
+	 *  HELPER FUNCTIONS  *
+	 *********************/
+	
+	// Checks if a user exists in Neo4j with the given username
 	public boolean userExists(String username) {
 		boolean exists = false;
 
@@ -264,6 +289,7 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 		return exists;
 	}
 
+	// Checks if a song exists in Neo4j with the given username
 	public boolean songExists(String songId) {
 		boolean exists = false;
 
