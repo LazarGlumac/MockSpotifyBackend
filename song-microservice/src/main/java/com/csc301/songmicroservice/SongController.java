@@ -178,7 +178,7 @@ public class SongController {
 			@RequestParam("shouldDecrement") String shouldDecrement, HttpServletRequest request) {
 
 		Map<String, Object> response = new HashMap<String, Object>();
-		response.put("data", String.format("PUT %s", Utils.getUrl(request)));
+		response.put("path", String.format("PUT %s", Utils.getUrl(request)));
 
 		boolean decrementAsBoolean = shouldDecrement.equals("true");
 
