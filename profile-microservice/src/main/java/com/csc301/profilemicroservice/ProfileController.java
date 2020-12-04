@@ -92,26 +92,42 @@ public class ProfileController {
 		DbQueryStatus dbQueryStatus = profileDriver.getAllSongFriendsLike(userName);
 		DbQueryStatus finalDbQueryStatus;
 
+		// Checking if the Neo4j queries to find all the liked songs of the user's friends was successful
 		if (dbQueryStatus.getdbQueryExecResult().equals(DbQueryExecResult.QUERY_OK)) {
+			
+			// Storing the liked songs of the user's friends
 			Object data = dbQueryStatus.getData();
 
 			ObjectMapper mapper = new ObjectMapper();
+			
+			/* Storing the liked songs of the user's friends in a map where the friend's usernames are the keys
+			 * and the values are the lists of liked songs for each friend*/
 			Map<String, Object> friendsFavoriteSongTitles = mapper.convertValue(data, Map.class);
 			
+			// Iterator to iterate through friendsFavoriteSongTitles map in order to find the title of each liked song
 			Iterator<Entry<String, Object>> mapIterator = friendsFavoriteSongTitles.entrySet().iterator();
-
+			
+			// Keeps track of whether the call to the Song Microservice is successful
 			boolean goodCall = true;
 
+			// Iterating through the friendsFavoriteSongTitles map to find the titles of the liked songs of each friend
 			while (mapIterator.hasNext() && goodCall) {
+				
+				// Stores the current entry of the map
 				Map.Entry friendName = (Map.Entry) mapIterator.next();
-
+				
+				// Storing the list of songs liked by the current friend
 				String friendsSongIds = friendsFavoriteSongTitles.get(friendName.getKey()).toString();
 				friendsSongIds = friendsSongIds.substring(1, friendsSongIds.length() - 1);
 
 				if (!friendsSongIds.isEmpty()) {
+					// Converting friendsSongIds into an iterable array
 					String[] songIds = friendsSongIds.split(", ");
+					
+					// Stores the titles of each liked song
 					List<String> songTitles = new ArrayList<String>();
-
+					
+					// Iterating through each songId in songIds and making a request to the Song Microservice to find the song title
 					for (String songId : songIds) {
 						try {
 							String url = String.format("http://localhost:3001/getSongTitleById/%s", songId);
@@ -125,7 +141,10 @@ public class ProfileController {
 							responseGSTBI = call.execute();
 							String getSongIdBody = responseGSTBI.body().string();
 
+							// Checking if a song title was found
 							if (mapper.readValue(getSongIdBody, Map.class).get("status").toString().equals("OK")) {
+								
+								// Adding the found song title to songTitles
 								songTitles.add(mapper.readValue(getSongIdBody, Map.class).get("data").toString());
 							} else {
 								if (!mapper.readValue(getSongIdBody, Map.class).get("status").toString()
@@ -139,7 +158,8 @@ public class ProfileController {
 							break;
 						}
 					}
-
+					
+					// Adding the friend-songs, key-value pair to friendsFavoriteSongTitles 
 					friendsFavoriteSongTitles.put(friendName.getKey().toString(), songTitles);
 				} else {
 					friendsFavoriteSongTitles.put(friendName.getKey().toString(), new String [0]);
@@ -200,10 +220,14 @@ public class ProfileController {
 		response.put("path", String.format("PUT %s", Utils.getUrl(request)));
 
 		DbQueryStatus dbQueryStatus = playlistDriver.likeSong(userName, songId);
-
+		
+		// Keeps track of whether the call to Song Microservice is successful
 		boolean goodCall = true;
 		
+		// Checking if the song was successfully liked in Neo4j
 		if (dbQueryStatus.getMessage().equals("OK")) {
+			
+			// Incrementing songAmountFavourites in MongoDB
 			try {
 				String urlParams = String.format("http://localhost:3001/updateSongFavouritesCount/%s", songId);
 
@@ -242,10 +266,14 @@ public class ProfileController {
 		response.put("path", String.format("PUT %s", Utils.getUrl(request)));
 
 		DbQueryStatus dbQueryStatus = playlistDriver.unlikeSong(userName, songId);
-
+		
+		// Keeps track of whether the call to the Song Microservices is successful
 		boolean goodCall = true;
-
+		
+		// Checking if the song was successfully unliked in Neo4j
 		if (dbQueryStatus.getdbQueryExecResult().equals(DbQueryExecResult.QUERY_OK)) {
+			
+			// Decrementing songAmountFavourites in MongoDB
 			try {
 				String urlParams = String.format("http://localhost:3001/updateSongFavouritesCount/%s", songId);
 
