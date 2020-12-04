@@ -33,7 +33,7 @@ public class SongController {
 	}
 
 	/**
-	 * This method controls and handles the route for /getSongById/{songId} (GET), and returns the title, artist name,
+	 * Controls and handles the route for /getSongById/{songId} (GET), and returns the title, artist name,
 	 * album name, and number of favourites for the song.
 	 * 
 	 * @param songId the ObjectID of the song in the MongoDB
@@ -55,7 +55,7 @@ public class SongController {
 	}
 
 	/**
-	 * This method controls and handles the route for /getSongTitleById/{songId} (GET), and returns the title of the
+	 * Controls and handles the route for /getSongTitleById/{songId} (GET), and returns the title of the
 	 * song with the given ID.
 	 * 
 	 * @param songId the ObjectID of the song in the MongoDB
@@ -77,7 +77,7 @@ public class SongController {
 	}
 
 	/**
-	 * This method controls and handles the route for /deleteSongById/{songId} (DELETE), deleting the song from all databases
+	 * Controls and handles the route for /deleteSongById/{songId} (DELETE), deleting the song from all databases
 	 * and playlists in which it appeared.
 	 * 
 	 * @param songId the ObjectID of the song in the MongoDB
@@ -117,7 +117,7 @@ public class SongController {
 	}
 
 	/**
-	 * This method controls and handles the route for /addSong (POST), adding the song to the MongoDB, and sending
+	 * Controls and handles the route for /addSong (POST), adding the song to the MongoDB, and sending
 	 * a request to add it to the Neo4jDB as well.
 	 * 
 	 * @param songId the ObjectID of the song in the MongoDB
