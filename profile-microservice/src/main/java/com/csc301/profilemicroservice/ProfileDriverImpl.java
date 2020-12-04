@@ -53,7 +53,7 @@ public class ProfileDriverImpl implements ProfileDriver {
 			queryStatus = new DbQueryStatus("MISSING BODY PARAMETER", DbQueryExecResult.QUERY_ERROR_GENERIC);
 		} else {
 			
-			// Keeps track of whether a user with the given username exists in Neo4j
+			// Keeps track of whether a user with the given username already exists in Neo4j
 			boolean alreadyExists = false;
 
 			try (Session session = ProfileMicroserviceApplication.driver.session()) {
