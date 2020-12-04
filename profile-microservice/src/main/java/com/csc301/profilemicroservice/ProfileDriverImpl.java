@@ -338,7 +338,12 @@ public class ProfileDriverImpl implements ProfileDriver {
 	 *  HELPER FUNCTIONS  *
 	 *********************/
 	
-	// Checks if a user exists in Neo4j with the given username
+	/**
+	 * Checks if a user exists in the Neo4j database
+	 * 
+	 * @param username the userName property of the profile node in the Neo4j database
+	 * @return true, if the user exists, false otherwise
+	 */
 	public boolean userExists(String username) {
 		boolean exists = false;
 

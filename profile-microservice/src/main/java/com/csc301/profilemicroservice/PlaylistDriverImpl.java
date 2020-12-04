@@ -31,6 +31,13 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 		}
 	}
 
+	
+	/**
+	 * Adds a song node into the Neo4j database with the given songId
+	 * 
+	 * @param songId the songId property of the song node in the Neo4j database
+	 * @return the DbQueryStatus of the operation performed (OK for success, non OK o/w)
+	 */
 	public DbQueryStatus addSong(String songId) {
 
 		DbQueryStatus queryStatus;
@@ -78,6 +85,13 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 		return queryStatus;
 	}
 
+	/**
+	 * Creates a direct relationship from the given user's playlist to the song labelled, "includes", in the Neo4j database
+	 * 
+	 * @param songId the songId property of the song node in the Neo4j database
+	 * @param userName the userName property of the profile node in the Neo4j database
+	 * @return the DbQueryStatus of the operation performed (OK for success, non OK o/w)
+	 */
 	@Override
 	public DbQueryStatus likeSong(String userName, String songId) {
 
@@ -144,6 +158,13 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 		return queryStatus;
 	}
 
+	/**
+	 * Removes a direct relationship from the given user's playlist to the song labelled, "includes", in the Neo4j database
+	 * 
+	 * @param songId the songId property of the song node in the Neo4j database
+	 * @param userName the userName property of the profile node in the Neo4j database
+	 * @return the DbQueryStatus of the operation performed (OK for success, non OK o/w)
+	 */
 	@Override
 	public DbQueryStatus unlikeSong(String userName, String songId) {
 
@@ -210,6 +231,12 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 		return queryStatus;
 	}
 
+	/**
+	 * Removes a song node from the Neo4j database, including all of its relationships
+	 * 
+	 * @param songId the songId property of the song node in the Neo4j database
+	 * @return the DbQueryStatus of the operation performed (OK for success, non OK o/w)
+	 */
 	@Override
 	public DbQueryStatus deleteSongFromDb(String songId) {
 
@@ -262,7 +289,12 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 	 *  HELPER FUNCTIONS  *
 	 *********************/
 	
-	// Checks if a user exists in Neo4j with the given username
+	/**
+	 * Checks if a user exists in the Neo4j database
+	 * 
+	 * @param username the userName property of the profile node in the Neo4j database
+	 * @return true, if the user exists, false otherwise
+	 */
 	public boolean userExists(String username) {
 		boolean exists = false;
 
@@ -289,7 +321,12 @@ public class PlaylistDriverImpl implements PlaylistDriver {
 		return exists;
 	}
 
-	// Checks if a song exists in Neo4j with the given username
+	/**
+	 * Checks if a song exists in the Neo4j database
+	 * 
+	 * @param songId the songId property of the song node in the Neo4j database
+	 * @return true, if the song exists, false otherwise
+	 */
 	public boolean songExists(String songId) {
 		boolean exists = false;
 
